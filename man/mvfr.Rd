@@ -4,12 +4,12 @@
 \alias{mvfr}
 \title{Multivariate Functional Additive Mixed Model Regression}
 \usage{
-mvfr(data, fRI_B = FALSE, fRI_C = FALSE, bs = "ps", bf_mean = 8,
-  bf_covariates = 8, m_mean = c(2, 3), covariate = FALSE,
-  num_covariates = NULL, covariate_form = NULL, interaction = FALSE,
-  which_interaction = matrix(NA), bf_covs, m_covs, var_level = 0.99,
-  use_famm = FALSE, save_model_famm = FALSE, one_dim = NULL,
-  mfpc_cutoff = 0.95, number_mfpc = NULL,
+mvfr(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE, bs = "ps",
+  bf_mean = 8, bf_covariates = 8, m_mean = c(2, 3),
+  covariate = FALSE, num_covariates = NULL, covariate_form = NULL,
+  interaction = FALSE, which_interaction = matrix(NA), bf_covs, m_covs,
+  var_level = 0.99, use_famm = FALSE, save_model_famm = FALSE,
+  one_dim = NULL, mfpc_cutoff = 0.95, number_mfpc = NULL,
   mfpc_cut_method = c("total_disp", "unidim"),
   final_method = c("w_bam", "bam", "gamm", "gaulss"), ...)
 }
@@ -22,6 +22,65 @@ names, see Details.}
 
 \item{fRI_C}{Boolean for including functional random intercept
 for word (C in Cederbaum). Defaults to \code{FALSE}.}
+
+\item{nested}{\code{TRUE} to specify a model with nested functional random
+intercepts for the first and second grouping variable and a smooth error
+curve. Defaults to \code{FALSE}.}
+
+\item{bs}{Spline basis function, only tested for "ps" (as in sparseFLMM)}
+
+\item{bf_mean}{Basis dimension for functional intercept (as in sparseFLMM)}
+
+\item{bf_covariates}{Basis dimension for all covariates (as in sparseFLMM)}
+
+\item{m_mean}{Order of penalty for basis function (as in sparseFLMM)}
+
+\item{covariate}{Covariate effects (as in sparseFLMM)}
+
+\item{num_covariates}{Number of covariates included in the model (as in
+sparseFLMM)}
+
+\item{covariate_form}{Vector of strings for type of covariate (as in
+sparseFLMM)}
+
+\item{interaction}{TRUE if there are interactions between covariates (as in
+sparseFLMM). Defaults to \code{FALSE}.}
+
+\item{which_interaction}{Symmetric matrix specifying the interaction terms
+(as in sparseFLMM)}
+
+\item{bf_covs}{Vector of marginal basis dimensions for fRI covariance
+estimation (as in sparseFLMM)}
+
+\item{m_covs}{List of marginal orders for the penaltyin fRI covariance
+estimation (as in sparseFLMM)}
+
+\item{var_level}{Pre-specified level of explained variance on each
+dimension (as in sparseFLMM)}
+
+\item{use_famm}{Re-estimate the mean in FAMM context (as in sparseFLMM) -
+overwritten by one_dim}
+
+\item{save_model_famm}{Give out the FAMM model object (as in sparseFLMM) -
+overwritten by one_dim}
+
+\item{one_dim}{Specify the name of the dimension if sparseFLMM is to be
+computed only on one dimension}
+
+\item{mfpc_cutoff}{Pre-specified level of explained variance of results of
+MFPCA (1 for previous versions of mvfr)}
+
+\item{number_mfpc}{List containing the number of mfPCs needed for each
+variance component e.g. list("E" = x, "B" = y)}
+
+\item{mfpc_cut_method}{Method to determine the level of explained variance
+\itemize{
+  \item total_disp: total dispersion (trace(\Sigma))
+  \item unidim: separate on each dimension
+}}
+
+\item{final_method}{Function used for estimation of final model to allow for
+potential heteroscedasticity ("w_bam", "bam", "gamm", "gaulss")}
 }
 \value{
 A list with four elements
