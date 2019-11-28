@@ -27,60 +27,63 @@ for word (C in Cederbaum). Defaults to \code{FALSE}.}
 intercepts for the first and second grouping variable and a smooth error
 curve. Defaults to \code{FALSE}.}
 
-\item{bs}{Spline basis function, only tested for "ps" (as in sparseFLMM)}
+\item{bs}{Spline basis function, only tested for "ps" (as in sparseFLMM).}
 
-\item{bf_mean}{Basis dimension for functional intercept (as in sparseFLMM)}
+\item{bf_mean}{Basis dimension for functional intercept (as in sparseFLMM).}
 
-\item{bf_covariates}{Basis dimension for all covariates (as in sparseFLMM)}
+\item{bf_covariates}{Basis dimension for all covariates (as in sparseFLMM).}
 
-\item{m_mean}{Order of penalty for basis function (as in sparseFLMM)}
+\item{m_mean}{Order of penalty for basis function (as in sparseFLMM).}
 
-\item{covariate}{Covariate effects (as in sparseFLMM)}
+\item{covariate}{Covariate effects (as in sparseFLMM).}
 
 \item{num_covariates}{Number of covariates included in the model (as in
-sparseFLMM)}
+sparseFLMM).}
 
 \item{covariate_form}{Vector of strings for type of covariate (as in
-sparseFLMM)}
+sparseFLMM).}
 
 \item{interaction}{TRUE if there are interactions between covariates (as in
 sparseFLMM). Defaults to \code{FALSE}.}
 
 \item{which_interaction}{Symmetric matrix specifying the interaction terms
-(as in sparseFLMM)}
+(as in sparseFLMM).}
 
 \item{bf_covs}{Vector of marginal basis dimensions for fRI covariance
-estimation (as in sparseFLMM)}
+estimation (as in sparseFLMM).}
 
 \item{m_covs}{List of marginal orders for the penaltyin fRI covariance
-estimation (as in sparseFLMM)}
+estimation (as in sparseFLMM).}
 
 \item{var_level}{Pre-specified level of explained variance on each
-dimension (as in sparseFLMM)}
+dimension (as in sparseFLMM).}
 
 \item{use_famm}{Re-estimate the mean in FAMM context (as in sparseFLMM) -
-overwritten by one_dim}
+overwritten by one_dim.}
 
 \item{save_model_famm}{Give out the FAMM model object (as in sparseFLMM) -
-overwritten by one_dim}
+overwritten by one_dim.}
 
 \item{one_dim}{Specify the name of the dimension if sparseFLMM is to be
-computed only on one dimension}
+computed only on one dimension.}
 
 \item{mfpc_cutoff}{Pre-specified level of explained variance of results of
-MFPCA (1 for previous versions of mvfr)}
+MFPCA (1 for previous versions of mvfr).}
 
 \item{number_mfpc}{List containing the number of mfPCs needed for each
-variance component e.g. list("E" = x, "B" = y)}
+variance component e.g. list("E" = x, "B" = y).}
 
 \item{mfpc_cut_method}{Method to determine the level of explained variance
 \itemize{
-  \item total_disp: total dispersion (trace(\Sigma))
-  \item unidim: separate on each dimension
+  \item total_disp: total dispersion (trace(\eqn{\Sigma})).
+  \item unidim: separate on each dimension.
 }}
 
 \item{final_method}{Function used for estimation of final model to allow for
-potential heteroscedasticity ("w_bam", "bam", "gamm", "gaulss")}
+potential heteroscedasticity ("w_bam", "bam", "gamm", "gaulss").}
+
+\item{...}{Additional arguments to be passed to (mainly) the underlying
+sparseFLMM function.}
 }
 \value{
 A list with four elements
@@ -88,7 +91,7 @@ A list with four elements
     \item the final multivariate FAMM
     \item the sparseFLMM output for each of the dimensions
     \item the MFPC output
-    \item the data used to fit the model}
+    \item the data used to fit the model.}
 }
 \description{
 This is the main function of the package and fits the multivariate functional
