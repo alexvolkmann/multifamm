@@ -107,7 +107,7 @@ mvfr <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE, bs = "ps",
 
   # model_list is a list that contains a sparse_flmm object for each dimension
   model_list <- apply_sparseFLMM(fRI_B = fRI_B,
-                    fRI_C = fRI_C, bs = bs, bf_mean = bf_mean,
+                    fRI_C = fRI_C, nested = nested, bs = bs, bf_mean = bf_mean,
                     bf_covariates = bf_covariates, m_mean = m_mean,
                     covariate = covariate,
                     num_covariates = num_covariates,
@@ -185,7 +185,7 @@ mvfr <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE, bs = "ps",
 #------------------------------------------------------------------------------#
 # Implementation of sparseFLMM on Each Dimension
 #------------------------------------------------------------------------------#
-apply_sparseFLMM <- function(fRI_B, fRI_C, bs, bf_mean, bf_covariates,
+apply_sparseFLMM <- function(fRI_B, fRI_C, nested, bs, bf_mean, bf_covariates,
                              m_mean, covariate, num_covariates, covariate_form,
                              interaction, which_interaction, bf_covs, m_covs,
                              var_level, use_famm, save_model_famm, one_dim,
@@ -265,7 +265,7 @@ apply_sparseFLMM <- function(fRI_B, fRI_C, bs, bf_mean, bf_covariates,
                 covariate_form = covariate_form, interaction = interaction,
                 which_interaction = which_interaction, bf_covs = bf_covs,
                 m_covs = m_covs, var_level = var_level, use_famm = use_famm,
-                save_model_famm = save_model_famm, ... = ...)
+                save_model_famm = save_model_famm, nested = nested, ... = ...)
   names(out) <- levels(data$dim)
 
   out
@@ -281,7 +281,7 @@ sparseFLMM_one_d <- function(dimension, data, use_RI, use_simple, bs, bf_mean,
                              bf_covariates, m_mean, covariate, num_covariates,
                              covariate_form, interaction, which_interaction,
                              bf_covs, m_covs, var_level, use_famm,
-                             save_model_famm, ...){
+                             save_model_famm, nested, ...){
 
   # Arguments
   # dimension         : String describing the dimension to analyse
@@ -339,6 +339,7 @@ sparseFLMM_one_d <- function(dimension, data, use_RI, use_simple, bs, bf_mean,
                          var_level = var_level,
                          use_famm = use_famm,
                          save_model_famm = save_model_famm,
+                         nested = nested,
                          ... = ...)
 
 }
