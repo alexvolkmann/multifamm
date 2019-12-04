@@ -15,7 +15,7 @@ Imports: data.table,
     funData,
     MFPCA (>= 1.3-2),
     mgcv,
-    sparseFLMM (>= 0.3.0),
+    sparseFLMM (> 0.3.0),
     zoo
 Suggests: ggplot2,
     reshape
