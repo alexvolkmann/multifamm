@@ -1026,9 +1026,9 @@ predict_mean <- function(model, multi = TRUE, dimlabels = c("aco", "epg")) {
     # Use first observation to get the structure of the data.frame
     newdat <- model$model$model[1,]
     newdat[, grep("^dim.", names(newdat))] <- 0.5
-    newdat <- newdat[rep(1, times = 200), ]
+    newdat <- newdat[rep(1, times = 100*length(dimlabels)), ]
     newdat$dim <-factor(rep(dimlabels, each = 100))
-    newdat$t <- rep(seq(0, 1, length.out = 100), times = 2)
+    newdat$t <- rep(seq(0, 1, length.out = 100), times = length(dimlabels))
 
     # Predict the gam terms
     out <- mgcv::predict.bam(model$model, newdata = newdat, type = "terms")
@@ -1052,12 +1052,12 @@ predict_mean <- function(model, multi = TRUE, dimlabels = c("aco", "epg")) {
   }
 
   # Output as multiFunData
-  multiFunData(list(funData(argvals = seq(0, 1, length.out = 100),
-                            X = matrix(out[1:100], ncol = 100, nrow = 1,
-                                       byrow = TRUE)),
-                    funData(argvals = seq(0, 1, length.out = 100),
-                            X = matrix(out[101:200], ncol = 100, nrow = 1,
-                                       byrow = TRUE))))
+  fundata_list <- lapply(seq_along(dimlabels), function (i){
+    funData::funData(argvals = seq(0, 1, length.out = 100),
+                     X = matrix(out[((i-1)*100+1):(i*100)], ncol = 100,
+                                nrow = 1, byrow = TRUE))
+  })
+  funData::multiFunData(fundata_list)
 
 }
 #------------------------------------------------------------------------------#
