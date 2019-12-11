@@ -157,7 +157,8 @@ mvfr <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE, bs = "ps",
                       num_covariates = num_covariates,
                       covariate_form = covariate_form,
                       interaction = interaction,
-                      which_interaction = which_interaction)
+                      which_interaction = which_interaction,
+                      nested = nested)
 
   # Create the model formula
   formula <- create_formula(data = data, MFPC = MFPC, bs = bs,

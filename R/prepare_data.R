@@ -135,7 +135,7 @@ approxNA <- function (object) {
 #------------------------------------------------------------------------------#
 prepare_gam <- function(data, bs, bf_covariates, m_mean, covariate,
                         num_covariates, covariate_form, interaction,
-                        which_interaction){
+                        which_interaction, nested){
 
   # Arguments
   # data              : Data that contains all the covariates
@@ -158,6 +158,13 @@ prepare_gam <- function(data, bs, bf_covariates, m_mean, covariate,
   facs <- c("n_long", "subject_long", "word_long")
   facs <- facs[facs %in% colnames(data)]
   setDT(data)[, (facs):= lapply(.SD, as.factor), .SDcols=facs]
+
+  # In the nested model case, the grouping variable word_long has to have I*J
+  # different levels instead of only J levels
+  if (nested) {
+    setnames(data, "word_long", "word_long_orig")
+    data[, word_long := interaction(subject_long, word_long_orig)]
+  }
 
   # Rest of function is only necessary to create the interaction variables for
   # the covariates

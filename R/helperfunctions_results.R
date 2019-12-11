@@ -417,7 +417,10 @@ funData2DataFrame <- function(fundata, multifun = TRUE) {
 
   # Arguments
   # fundata   : Fundata object to be converted to a data frame
-  # multifun  : Is the object a multiFunData object
+  # multifun  : Is the object a multiFunData object - DEPRECATED -
+
+  # Automatic checking if the funData object belongs to class multiFunData
+  multifun <- "multiFunData" %in% class(fundata)
 
   data_list <-if (multifun == TRUE) {
     lapply(fundata@.Data, function (x) {
@@ -1028,7 +1031,7 @@ predict_mean <- function(model, multi = TRUE, dimlabels = c("aco", "epg")) {
     newdat$t <- rep(seq(0, 1, length.out = 100), times = 2)
 
     # Predict the gam terms
-    out <- predict.bam(model$model, newdata = newdat, type = "terms")
+    out <- mgcv::predict.bam(model$model, newdata = newdat, type = "terms")
     out <- rowSums(out[, grepl("dim", colnames(out))])
 
   } else {
