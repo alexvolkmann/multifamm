@@ -1025,10 +1025,20 @@ predict_mean <- function(model, multi = TRUE, dimlabels = c("aco", "epg")) {
 
     # Use first observation to get the structure of the data.frame
     newdat <- model$model$model[1,]
-    newdat[, grep("^dim.", names(newdat))] <- 0.5
+
+    # All the covariates have to be set to 0.5
+    # BUT only if they are on the same dimension as is computed in the moment
     newdat <- newdat[rep(1, times = 100*length(dimlabels)), ]
     newdat$dim <-factor(rep(dimlabels, each = 100))
     newdat$t <- rep(seq(0, 1, length.out = 100), times = length(dimlabels))
+    change_ind <- sapply(newdat$dim, function (x) {
+      grepl(paste0("dim", x), colnames(newdat))
+      })
+    cov_ind <- grepl("^dim.", names(newdat))
+    for (i in 1:nrow(newdat)) {
+      newdat[i, change_ind[, i]] <- 0.5
+      newdat[i, !change_ind[, i] & cov_ind] <- 0
+    }
 
     # Predict the gam terms
     out <- mgcv::predict.bam(model$model, newdata = newdat, type = "terms")
