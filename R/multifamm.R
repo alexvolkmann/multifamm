@@ -69,6 +69,8 @@
 #'   overwritten by one_dim.
 #' @param one_dim Specify the name of the dimension if sparseFLMM is to be
 #'   computed only on one dimension.
+#' @param mfpc_weight TRUE if the estimated univariate error variance is to be
+#'   to be used as weights in the scalar product of the MFPCA.
 #' @param mfpc_cutoff Pre-specified level of explained variance of results of
 #'   MFPCA (1 for previous versions of mvfr).
 #' @param number_mfpc List containing the number of mfPCs needed for each
@@ -91,15 +93,17 @@
 #' @export
 #' @import data.table
 #' @import funData
-mvfr <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE, bs = "ps",
-                 bf_mean = 8, bf_covariates = 8, m_mean = c(2,3),
-                 covariate = FALSE, num_covariates = NULL,
-                 covariate_form = NULL, interaction = FALSE,
-                 which_interaction = matrix(NA), bf_covs, m_covs,
-                 var_level = 0.99, use_famm = FALSE, save_model_famm = FALSE,
-                 one_dim = NULL, mfpc_cutoff = 0.95, number_mfpc = NULL,
-                 mfpc_cut_method = c("total_disp", "unidim"),
-                 final_method = c("w_bam", "bam", "gamm", "gaulss"), ...){
+multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
+                      bs = "ps", bf_mean = 8, bf_covariates = 8,
+                      m_mean = c(2,3), covariate = FALSE, num_covariates = NULL,
+                      covariate_form = NULL, interaction = FALSE,
+                      which_interaction = matrix(NA), bf_covs, m_covs,
+                      var_level = 0.99, use_famm = FALSE,
+                      save_model_famm = FALSE, one_dim = NULL,
+                      mfpc_weight = FALSE, mfpc_cutoff = 0.95,
+                      number_mfpc = NULL,
+                      mfpc_cut_method = c("total_disp", "unidim"),
+                      final_method = c("w_bam", "bam", "gamm", "gaulss"), ...){
 
   # Match arguments that are chosen from list of options
   final_method <- match.arg(final_method)
@@ -129,19 +133,15 @@ mvfr <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE, bs = "ps",
   #   - multiFunData object
   #   - list containing all the uniExpansions information
   #   - number of possible components to extract
-  mfpca_info <- prepare_mfpca(model_list = model_list, fRI_B = fRI_B)
+  mfpca_info <- prepare_mfpca(model_list = model_list, fRI_B = fRI_B,
+                              mfpc_weight = mfpc_weight)
 
-  # So far only unweigted MFPCA
+  # So far only unweigted MFPCA or weighted using the estimated error vars
   cat("--------------------------------------\n")
   cat("Compute MFPCA\n")
   cat("--------------------------------------\n")
-  MFPC <- lapply(mfpca_info, function(x){
-    tryCatch(
-      MFPCA::MFPCA(mFData = x$mFData,
-            M = x$M_comp,
-            uniExpansions = x$uniExpansions),
-      error = function(e) return(NULL))
-  })
+
+  MFPC <- conduct_mfpca(mfpca_info, mfpc_weight)
 
   # Prune the MFPC to prespecified cutoff level of variance explained
   MFPC <- prune_mfpc(MFPC = MFPC, mfpc_cutoff = mfpc_cutoff,

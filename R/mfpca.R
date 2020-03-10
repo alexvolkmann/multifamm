@@ -3,12 +3,17 @@
 #------------------------------------------------------------------------------#
 # Prepare Information Necessary for MFPCA
 #------------------------------------------------------------------------------#
-prepare_mfpca <- function(model_list, fRI_B){
-
-  # Arguments
-  # model_list    : List containing sparseFLMM objects for each dimension
-  # fRI_B         : Boolean for including functional random intercept for
-  #                   individual (B in Cederbaum)
+#' Prepare Information Necessary for MFPCA
+#'
+#' This is an internal function contained in the multiFAMM function. This step
+#' uses the information from the univariate FLMMs for the MFPCA. It also allows
+#' a simple weighting scheme of the MFPCA.
+#'
+#' @param model_list List containing sparseFLMM objects for each dimension as
+#'   given by the output of apply_sparseFLMM()
+#' @inheritParams multiFAMM
+#'
+prepare_mfpca <- function(model_list, fRI_B, mfpc_weight){
 
   # Extract the necessary information from the model list
   model_info <- extract_mfpca_info(model_list = model_list, fRI_B = fRI_B)
@@ -58,11 +63,27 @@ prepare_mfpca <- function(model_list, fRI_B){
     })
   })
 
+  # Create list containing the output
   out <- mapply(function(x, y, z){
     list(mFData = x,
          uniExpansions = y,
          M_comp = z)
   }, multiFun_comp, uniExpansions, M_comp, SIMPLIFY = FALSE)
+
+  # Also include weights into the output
+  weights <- sapply(model_list, function(x) {
+    sig <- grep("^cov_hat_", names(x))
+    1 / x[[sig]]$sigmasq
+  })
+  out <- lapply(out, function (x) {
+    x$weights <- if(mfpc_weight) {
+      weights
+    } else {
+      rep(1, length(weights))
+    }
+    x
+  })
+
   out
 
 }
@@ -186,3 +207,35 @@ inflate <- function(model_info){
 }
 #------------------------------------------------------------------------------#
 
+
+
+#------------------------------------------------------------------------------#
+# Use Information From Univariate FLMMs For The MFPCA
+#------------------------------------------------------------------------------#
+#' Conduct the MFPCA
+#'
+#' This is an internal function contained in the multiFAMM function. This step
+#' uses the information from the univariate FLMMs for the MFPCA. It also allows
+#' a single weighting scheme of the MFPCA.
+#'
+#' Currently, it is possible to conduct a non-weighted MFPCA (default) as well
+#' as a MFPCA that uses the estimated univariate error variances as weights.
+#'
+#' @param mfpca_info Object containing all the neccessary information for the
+#'   MFPCA. List as given by the output of prepare_mfpca().
+conduct_mfpca <- function(mfpca_info, mfpc_weight){
+
+  # Actual MFPCA step - for each covariance component separately
+  MFPC <- lapply(mfpca_info, function(x){
+    tryCatch(
+      MFPCA::MFPCA(mFData = x$mFData,
+                   M = x$M_comp,
+                   uniExpansions = x$uniExpansions,
+                   weights = x$weights),
+      error = function(e) return(NULL))
+  })
+
+  MFPC
+
+}
+#------------------------------------------------------------------------------#
