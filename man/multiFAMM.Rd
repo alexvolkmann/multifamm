@@ -4,14 +4,33 @@
 \alias{multiFAMM}
 \title{Multivariate Functional Additive Mixed Model Regression}
 \usage{
-multiFAMM(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
-  bs = "ps", bf_mean = 8, bf_covariates = 8, m_mean = c(2, 3),
-  covariate = FALSE, num_covariates = NULL, covariate_form = NULL,
-  interaction = FALSE, which_interaction = matrix(NA), bf_covs, m_covs,
-  var_level = 0.99, use_famm = FALSE, save_model_famm = FALSE,
-  one_dim = NULL, mfpc_weight = FALSE, mfpc_cutoff = 0.95,
-  number_mfpc = NULL, mfpc_cut_method = c("total_disp", "unidim"),
-  final_method = c("w_bam", "bam", "gamm", "gaulss"), ...)
+multiFAMM(
+  data,
+  fRI_B = FALSE,
+  fRI_C = FALSE,
+  nested = FALSE,
+  bs = "ps",
+  bf_mean = 8,
+  bf_covariates = 8,
+  m_mean = c(2, 3),
+  covariate = FALSE,
+  num_covariates = NULL,
+  covariate_form = NULL,
+  interaction = FALSE,
+  which_interaction = matrix(NA),
+  bf_covs,
+  m_covs,
+  var_level = 0.99,
+  use_famm = FALSE,
+  save_model_famm = FALSE,
+  one_dim = NULL,
+  mfpc_weight = FALSE,
+  mfpc_cutoff = 0.95,
+  number_mfpc = NULL,
+  mfpc_cut_method = c("total_var", "unidim"),
+  final_method = c("w_bam", "bam", "gamm", "gaulss"),
+  ...
+)
 }
 \arguments{
 \item{data}{Data.table that contains the information with some fixed variable
@@ -52,7 +71,7 @@ sparseFLMM). Defaults to \code{FALSE}.}
 \item{bf_covs}{Vector of marginal basis dimensions for fRI covariance
 estimation (as in sparseFLMM).}
 
-\item{m_covs}{List of marginal orders for the penaltyin fRI covariance
+\item{m_covs}{List of marginal orders for the penalty in fRI covariance
 estimation (as in sparseFLMM).}
 
 \item{var_level}{Pre-specified level of explained variance on each
@@ -78,7 +97,7 @@ variance component e.g. list("E" = x, "B" = y).}
 
 \item{mfpc_cut_method}{Method to determine the level of explained variance
 \itemize{
-  \item total_disp: total dispersion (trace(\eqn{\Sigma})).
+  \item total_var: (weighted) sum of variation over the dimensions.
   \item unidim: separate on each dimension.
 }}
 
@@ -119,5 +138,20 @@ The data set has to be of the following format:
   \item dim (factor): level of the dimension
   \item covariate.1 (numeric): potential covariate(s) named with trailing
     1,2,3,...
+}
+}
+\examples{
+\dontrun{
+# subset of the phonetic data (very small subset, no meaningful results can
+# be expected and no random effects other than the random smooth should be
+# included in the model)
+
+data(phonetic_subset)
+
+m <- multiFAMM(data = phonetic_subset, covariate = TRUE, num_covariates = 2,
+               covariate_form = c("by", "by"), interaction = TRUE,
+               which_interaction = matrix(c(FALSE, TRUE, TRUE, FALSE),
+               nrow = 2, ncol = 2), bf_covs = c(5), m_covs = list(c(2, 3)),
+               mfpc_cut_method = "total_var", final_method = "w_bam")
 }
 }

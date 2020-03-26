@@ -59,7 +59,7 @@
 #'   (as in sparseFLMM).
 #' @param bf_covs Vector of marginal basis dimensions for fRI covariance
 #'   estimation (as in sparseFLMM).
-#' @param m_covs List of marginal orders for the penaltyin fRI covariance
+#' @param m_covs List of marginal orders for the penalty in fRI covariance
 #'   estimation (as in sparseFLMM).
 #' @param var_level Pre-specified level of explained variance on each
 #'   dimension (as in sparseFLMM).
@@ -77,7 +77,7 @@
 #'   variance component e.g. list("E" = x, "B" = y).
 #' @param mfpc_cut_method Method to determine the level of explained variance
 #'   \itemize{
-#'     \item total_disp: total dispersion (trace(\eqn{\Sigma})).
+#'     \item total_var: (weighted) sum of variation over the dimensions.
 #'     \item unidim: separate on each dimension.
 #'   }
 #' @param final_method Function used for estimation of final model to allow for
@@ -93,6 +93,21 @@
 #' @export
 #' @import data.table
 #' @import funData
+#'
+#' @examples
+#' \dontrun{
+#' # subset of the phonetic data (very small subset, no meaningful results can
+#' # be expected and no random effects other than the random smooth should be
+#' # included in the model)
+#'
+#' data(phonetic_subset)
+#'
+#' m <- multiFAMM(data = phonetic_subset, covariate = TRUE, num_covariates = 2,
+#'                covariate_form = c("by", "by"), interaction = TRUE,
+#'                which_interaction = matrix(c(FALSE, TRUE, TRUE, FALSE),
+#'                nrow = 2, ncol = 2), bf_covs = c(5), m_covs = list(c(2, 3)),
+#'                mfpc_cut_method = "total_var", final_method = "w_bam")
+#' }
 multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
                       bs = "ps", bf_mean = 8, bf_covariates = 8,
                       m_mean = c(2,3), covariate = FALSE, num_covariates = NULL,
@@ -102,7 +117,7 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
                       save_model_famm = FALSE, one_dim = NULL,
                       mfpc_weight = FALSE, mfpc_cutoff = 0.95,
                       number_mfpc = NULL,
-                      mfpc_cut_method = c("total_disp", "unidim"),
+                      mfpc_cut_method = c("total_var", "unidim"),
                       final_method = c("w_bam", "bam", "gamm", "gaulss"), ...){
 
   # Match arguments that are chosen from list of options
@@ -146,7 +161,7 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   # Prune the MFPC to prespecified cutoff level of variance explained
   MFPC <- prune_mfpc(MFPC = MFPC, mfpc_cutoff = mfpc_cutoff,
                      model_list = model_list, mfpc_cut_method = mfpc_cut_method,
-                     number_mfpc = number_mfpc)
+                     number_mfpc = number_mfpc, mfpca_info = mfpca_info)
 
   # Attach weighted MFPC to data
   data <- attach_wfpc(MFPC = MFPC, data = data)

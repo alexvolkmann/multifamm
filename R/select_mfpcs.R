@@ -2,19 +2,22 @@
 #------------------------------------------------------------------------------#
 # Prune the MFPC object to include only a prespecified level of explained var
 #------------------------------------------------------------------------------#
+#' Prune the MFPC object to include only a prespecified level of explained var
+#'
+#' This is an internal function contained in the multiFAMM function. This
+#' function takes the MFPCA object and decides how many functional principal
+#' components are to be included in the model.
+#'
+#' @param MFPC List containing MFPC objects for each variance component as given
+#'   by the function conduct_mfpca()
+#' @param model_list List containing sparseFLMM objects for each dimension as
+#'   given by the output of apply_sparseFLMM()
+#' @param mfpca_info Object containing all the neccessary information for the
+#'   MFPCA. List as given by the output of prepare_mfpca().
+#' @inheritParams multiFAMM
+#'
 prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
-                       number_mfpc){
-
-  # Arguments
-  # MFPC            : List containing MFPC objects for each variance component
-  # mfpc_cutoff     : Pre-specified level of explained variance of results of
-  #                     MFPCA
-  # model_list      : List containing sparseFLMM objects for each dimension
-  # mfpc_cut_method : Method to determine the level of explained variance
-  #                     total_disp: total dispersion (trace(\Sigma))
-  #                     unidim: separate on each dimension
-  # number_mfpc     : List containing the number of mfPCs needed for each
-  #                     variance component
+                       number_mfpc, mfpca_info){
 
   # No pruning
   if (mfpc_cutoff == 1) return(MFPC)
@@ -30,10 +33,16 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
     x[[sig]]$sigmasq_int
   })
 
+  # Weight the sigma squared integrated if the total variation is used as a
+  # cutoff criterion
+  if (mfpc_cut_method == "total_var") {
+    sigma_sq <- sigma_sq * mfpca_info[[1]]$weights
+  }
+
   # Extract the eigenvalues for each variance component
   # Reweight with norm on single dimension if necessary
   values <- switch(mfpc_cut_method,
-                   "total_disp" = {
+                   "total_var" = {
                      lapply(MFPC, "[[", "values")
                    },
                    "unidim" = {
@@ -56,7 +65,7 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
   # Compute the number of fPCs depending on the level of explained variance
   # according to the method chosen
   number_mfpc <-  switch(mfpc_cut_method,
-                         "total_disp" = {
+                         "total_var" = {
                            compute_var(sigma_sq = sigma_sq, values = values,
                                        mfpc_cutoff = mfpc_cutoff)
                          },
@@ -69,8 +78,10 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
                            }, sigma_sq, values, SIMPLIFY = FALSE)
 
                            # Use the maximum of each variance component
-                           # Even if there is a different variance decomposition on the dimensions,
-                           # it is assured that the prespecified level is maintained
+                           # Even if there is a different variance decomposition
+                           # on the dimensions,
+                           # it is assured that the prespecified level is
+                           # maintained
                            tmp <- lapply(seq_along(MFPC), function (x) {
                              max(sapply(tmp, "[[", x))
                            })
@@ -100,7 +111,7 @@ compute_var <- function(sigma_sq, values, mfpc_cutoff){
   #                     MFPCA
 
 
-  # Compute the full variance using the total dispersion
+  # Compute the full variance using the total variation
   tot_var <- sum(sigma_sq) + sum(unlist(values))
 
   # Compute the variance that needs to be explained after subtracting

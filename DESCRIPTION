@@ -1,7 +1,7 @@
 Package: multifamm
 Type: Package
 Title: Multivariate Functional Additive Mixed Models
-Version: 0.1.0.9004
+Version: 0.1.0.9005
 Authors@R: person("Alexander", "Volkmann", 
     email = "alexander.volkmann@hu-berlin.de", role = c("aut", "cre"))
 Description: An implementation for multivariate functional additive mixed
@@ -10,7 +10,7 @@ Description: An implementation for multivariate functional additive mixed
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Imports: data.table,
     funData,
     MFPCA (>= 1.3-2),
