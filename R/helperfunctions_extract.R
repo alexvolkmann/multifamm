@@ -1,7 +1,7 @@
 ################################################################################
 ################################################################################
 ##                                                                            ##
-##                       Helperfunctions for the Simulation                   ##
+##                      Helperfunctions to Extract Components                 ##
 ##                                                                            ##
 ################################################################################
 ################################################################################
@@ -17,14 +17,42 @@
 #------------------------------------------------------------------------------#
 # Extract Model Components to be Compared
 #------------------------------------------------------------------------------#
+#' Extract Model Components to be Compared
+#'
+#' This is an internal function that helps to compare different models. The
+#' models resulting from a multiFAMM() call are typically very big. This
+#' function extracts the main information from a model so that a smaller R
+#' object can be saved.
+#'
+#' So far the grid is fixed to be on [0,1].
+#'
+#' @param model multiFAMM model object from which to extract the information.
+#' @param dimnames Names of the dimensions of the model.
+#'
+#' @return A list with the following elements
+#'   \itemize{
+#'     \item \code{error_var}: A list containing the following elements
+#'       \itemize{
+#'       \item \code{model_weights}: Model weights used in the final multiFAMM.
+#'       \item \code{modelsig2}: Estimate of sigma squared in the final model.
+#'       \item \code{uni_vars}: Univariate estimates of sigma squared.}
+#'     \item \code{eigenvals}: List containing the estimated eigenvalues.
+#'     \item \code{fitted_curves}: multiFunData object containing the fitted
+#'       curves.
+#'     \item \code{eigenfcts}: multiFunData object containing the estimated
+#'       eigenfunctions.
+#'     \item \code{cov_preds}: multiFunData object containing the estimated
+#'       covariate effects.
+#'     \item \code{ran_preds}: List containing multiFunData objects of the
+#'       predicted random effects.
+#'     \item \code{scores}: List containing matrices of the estimated scores.
+#'     \item \code{meanfun}: multiFunData object containing the estimated mean
+#'       function.}
 extract_components <- function (model, dimnames) {
-
-  # Arguments
-  # model       : Model from which to extract
-  # dimnames    : Names of dimensions in model
 
   # Fix a grid
   grid <- seq(0, 1, length.out = 100)
+
 
   # Error variance
   modelweights <- unique(model$model$weights)
@@ -121,6 +149,12 @@ extract_components <- function (model, dimnames) {
     matrix(qr.coef(qr(x), y), byrow = TRUE, ncol = ncol(z[[1]]))
   }, X, ran_ef, xef, SIMPLIFY = FALSE)
 
+
+  # Mean function (covs set to 0.5)
+  # Helpful for the plots for the FPCs
+  meanfun <- predict_mean(model = model, multi = TRUE, dimnames = dimnames)
+
+
   # Output
   comps <- list("error_var" = list("modelweights" = modelweights,
                                    "modelsig2" = modelsig2,
@@ -130,7 +164,8 @@ extract_components <- function (model, dimnames) {
                 "eigenfcts" = eigenfcts,
                 "cov_preds" = cov_preds,
                 "ran_preds" = ran_preds,
-                "scores" = scores)
+                "scores" = scores,
+                "meanfun" = meanfun)
 
 }
 #------------------------------------------------------------------------------#
@@ -222,9 +257,10 @@ predict_covs <- function (model, method = c("mul", "uni"),
            dat$yindex.vec <- grid
 
            # Predict data set
-           predict.bam(model[[grep("^fpc_famm_hat", names(model))]]$famm_estim,
-                       newdata = dat, type = type, se.fit = TRUE,
-                       unconditional = unconditional)
+           mgcv::predict.bam(model[[grep("^fpc_famm_hat",
+                                         names(model))]]$famm_estim,
+                             newdata = dat, type = type, se.fit = TRUE,
+                             unconditional = unconditional)
 
          })
 
@@ -324,6 +360,80 @@ predict_fitted <- function (model, grid = seq(0, 1, length.out = 100)) {
   newdat <- cbind(newdat, y_fit = pred)
 
   newdat
+
+}
+#------------------------------------------------------------------------------#
+
+
+#------------------------------------------------------------------------------#
+# Predict The Mean Function For the FPC Plots
+#------------------------------------------------------------------------------#
+#' Predict The Mean Function For the FPC Plots
+#'
+#' This is an internal function that helps to interpret the FPCs. Extract the
+#' mean function for all covariates set to 0.5. This is useful if combined with
+#' the estimated FPCs because one can then add and subtract suitable multiples
+#' from this function.
+#'
+#' @param model multiFAMM model or list of univariate models for which to
+#'   predict the mean.
+#' @param multi Indicator if it is a multiFAMM model (TRUE) or a list of
+#'   univariate models.
+#' @param dimnames Vector of strings containing the names of the dimensions.
+#'
+#' @return A multiFunData object.
+predict_mean <- function(model, multi = TRUE, dimnames = c("aco", "epg")) {
+
+  # Handle multivariate models and univariate models differently due to their
+  # structure
+
+  if (multi == TRUE) {
+
+    # Use first observation to get the structure of the data.frame
+    newdat <- model$model$model[1,]
+
+    # All the covariates have to be set to 0.5
+    # BUT only if they are on the same dimension as is computed in the moment
+    newdat <- newdat[rep(1, times = 100*length(dimnames)), ]
+    newdat$dim <-factor(rep(dimnames, each = 100))
+    newdat$t <- rep(seq(0, 1, length.out = 100), times = length(dimnames))
+    change_ind <- sapply(newdat$dim, function (x) {
+      grepl(paste0("dim", x), colnames(newdat))
+    })
+    cov_ind <- grepl("^dim.", names(newdat))
+    for (i in 1:nrow(newdat)) {
+      newdat[i, change_ind[, i]] <- 0.5
+      newdat[i, !change_ind[, i] & cov_ind] <- 0
+    }
+
+    # Predict the gam terms
+    out <- mgcv::predict.bam(model$model, newdata = newdat, type = "terms")
+    out <- rowSums(out[, grepl("dim", colnames(out))])
+
+  } else {
+    out <- sapply(model, function (x) {
+
+      # Use first observation to get the structure of the data.frame
+      newdat <- x$fpc_famm_hat_tri_constr$famm_estim$model[1, ]
+      newdat[, grep("^covariate|^inter", names(newdat))] <- 0.5
+      newdat <- newdat[rep(1, times = 100), ]
+      newdat$yindex.vec <- seq(0, 1, length.out = 100)
+
+      # Predict the gam terms
+      out <- predict.bam(x$fpc_famm_hat_tri_constr$famm_estim,
+                         newdata = newdat, type = "terms")
+      rowSums(out[, !grepl("^s\\(id\\_", colnames(out))]) +
+        x$fpc_famm_hat_tri_constr$intercept
+    })
+  }
+
+  # Output as multiFunData
+  fundata_list <- lapply(seq_along(dimnames), function (i){
+    funData::funData(argvals = seq(0, 1, length.out = 100),
+                     X = matrix(out[((i-1)*100+1):(i*100)], ncol = 100,
+                                nrow = 1, byrow = TRUE))
+  })
+  funData::multiFunData(fundata_list)
 
 }
 #------------------------------------------------------------------------------#

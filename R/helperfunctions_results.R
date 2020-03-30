@@ -1010,79 +1010,23 @@ covariate_plot <- function (m_true_comp, effects = c(4, 5, 6), m_fac = 2,
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
-# Predict The Mean Function For the FPC Plots
+# Predict The Covariate Effects of a Univariate sparseFLMM Model
 #------------------------------------------------------------------------------#
-predict_mean <- function(model, multi = TRUE, dimlabels = c("aco", "epg")) {
-
-  # Arguments
-  # model : Multivariate model or list of univariate models
-  # multi : Indicating which type of model
-
-  # Handle multivariate models and univariate models differently due to their
-  # structure
-
-  if (multi == TRUE) {
-
-    # Use first observation to get the structure of the data.frame
-    newdat <- model$model$model[1,]
-
-    # All the covariates have to be set to 0.5
-    # BUT only if they are on the same dimension as is computed in the moment
-    newdat <- newdat[rep(1, times = 100*length(dimlabels)), ]
-    newdat$dim <-factor(rep(dimlabels, each = 100))
-    newdat$t <- rep(seq(0, 1, length.out = 100), times = length(dimlabels))
-    change_ind <- sapply(newdat$dim, function (x) {
-      grepl(paste0("dim", x), colnames(newdat))
-      })
-    cov_ind <- grepl("^dim.", names(newdat))
-    for (i in 1:nrow(newdat)) {
-      newdat[i, change_ind[, i]] <- 0.5
-      newdat[i, !change_ind[, i] & cov_ind] <- 0
-    }
-
-    # Predict the gam terms
-    out <- mgcv::predict.bam(model$model, newdata = newdat, type = "terms")
-    out <- rowSums(out[, grepl("dim", colnames(out))])
-
-  } else {
-    out <- sapply(model, function (x) {
-
-      # Use first observation to get the structure of the data.frame
-      newdat <- x$fpc_famm_hat_tri_constr$famm_estim$model[1, ]
-      newdat[, grep("^covariate|^inter", names(newdat))] <- 0.5
-      newdat <- newdat[rep(1, times = 100), ]
-      newdat$yindex.vec <- seq(0, 1, length.out = 100)
-
-      # Predict the gam terms
-      out <- predict.bam(x$fpc_famm_hat_tri_constr$famm_estim,
-                         newdata = newdat, type = "terms")
-      rowSums(out[, !grepl("^s\\(id\\_", colnames(out))]) +
-        x$fpc_famm_hat_tri_constr$intercept
-    })
-  }
-
-  # Output as multiFunData
-  fundata_list <- lapply(seq_along(dimlabels), function (i){
-    funData::funData(argvals = seq(0, 1, length.out = 100),
-                     X = matrix(out[((i-1)*100+1):(i*100)], ncol = 100,
-                                nrow = 1, byrow = TRUE))
-  })
-  funData::multiFunData(fundata_list)
-
-}
-#------------------------------------------------------------------------------#
-
-#------------------------------------------------------------------------------#
-# Predict The Covariate Effects
-#------------------------------------------------------------------------------#
-predict_model <- function (model, type = "terms", unconditional = FALSE,
-                           grid = seq(0, 1, length.out = 100)) {
-
-  # Arguments:
-  # model         : Model with covariates
-  # type          : Gam terms to be predicted
-  # unconditional : Std conditional on lambda
-  # gri           : Grid of evaluation points
+#' Predict The Covariate Effects of a Univariate sparseFLMM Model
+#'
+#' This is an internal function that helps to compare univariate sparseFLMM
+#' models to multiFAMM models. This functions predicts the covariate effects of
+#' a model that has the structure of a regression model fitted by sparseFLMM().
+#'
+#' This functions' name in the thesis was predict_model().
+#'
+#' @param model sparseFLMM model with covariates.
+#' @param type Gam terms to be predicted.
+#' @param unconditional Std conditional on lambda.
+#' @param grid Grid of evaluation points. Defaults to observations on [0,1].
+predict_sparseFLMM_covar <- function (model, type = "terms",
+                                      unconditional = FALSE,
+                                      grid = seq(0, 1, length.out = 100)) {
 
   # Use first row so that there are reasonable values for all the
   # variables
