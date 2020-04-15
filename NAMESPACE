@@ -3,3 +3,4 @@
 export(multiFAMM)
 import(data.table)
 import(funData)
+importFrom(magrittr,"%>%")
