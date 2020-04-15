@@ -68,10 +68,11 @@ extract_components <- function (model, dimnames) {
 
   # Fitted curves
   fitted_curves <- predict_fitted(model = model, grid = grid)
-  fitted_curves <- multiFunData(lapply(split(fitted_curves, fitted_curves$dim),
-                                       function (x) {
-    funData(argvals = grid, X = matrix(x$y_fit, ncol = length(grid),
-                                       byrow = TRUE))
+  fitted_curves <- funData::multiFunData(lapply(split(fitted_curves,
+                                                      fitted_curves$dim),
+                                                function (x) {
+    funData::funData(argvals = grid, X = matrix(x$y_fit, ncol = length(grid),
+                                                byrow = TRUE))
   }))
 
 
@@ -96,8 +97,8 @@ extract_components <- function (model, dimnames) {
     })
     names(z) <- c("int", unique(colnames(x))[-1])
     z <- lapply(z, function (y) {
-      multiFunData(lapply(seq_along(dimnames), function (u) {
-        funData(argvals = grid, X = matrix(y[, u], nrow = 1))
+      funData::multiFunData(lapply(seq_along(dimnames), function (u) {
+        funData::funData(argvals = grid, X = matrix(y[, u], nrow = 1))
       }))
     })
   })
@@ -112,9 +113,9 @@ extract_components <- function (model, dimnames) {
   # Every variance component is a separate multiFunData object
   ran_preds <- lapply(ran_preds, function (x) {
     x <- split(x, f = x$dim)
-    multiFunData(lapply(x, function (y) {
-      funData(argvals = grid, X = matrix(y$pred, ncol = length(grid),
-              byrow = TRUE))
+    funData::multiFunData(lapply(x, function (y) {
+      funData::funData(argvals = grid, X = matrix(y$pred, ncol = length(grid),
+                                                  byrow = TRUE))
     }))
   })
 
@@ -306,8 +307,8 @@ predict_re <- function (model, component = c("E", "B", "C"), dimnames,
   newdat[, names(dat)] <- dat
 
   # Predict Random Effects and attach to data.frame
-  pred <- predict.bam(model$model, newdata = newdat,
-                      type = "terms")
+  pred <- mgcv::predict.bam(model$model, newdata = newdat,
+                            type = "terms")
   pred <- pred[, grep(fac_var, colnames(pred))]
   dat <- cbind(dat, pred)
 
@@ -355,8 +356,8 @@ predict_fitted <- function (model, grid = seq(0, 1, length.out = 100)) {
   }
 
   # Predict fitted values and attach to data.frame
-  pred <- predict.bam(model$model, newdata = newdat,
-                      type = "link")
+  pred <- mgcv::predict.bam(model$model, newdata = newdat,
+                            type = "link")
   newdat <- cbind(newdat, y_fit = pred)
 
   newdat
@@ -420,8 +421,8 @@ predict_mean <- function(model, multi = TRUE, dimnames = c("aco", "epg")) {
       newdat$yindex.vec <- seq(0, 1, length.out = 100)
 
       # Predict the gam terms
-      out <- predict.bam(x$fpc_famm_hat_tri_constr$famm_estim,
-                         newdata = newdat, type = "terms")
+      out <- mgcv::predict.bam(x$fpc_famm_hat_tri_constr$famm_estim,
+                               newdata = newdat, type = "terms")
       rowSums(out[, !grepl("^s\\(id\\_", colnames(out))]) +
         x$fpc_famm_hat_tri_constr$intercept
     })
@@ -470,7 +471,8 @@ extract_components_uni <- function (model) {
   # Fitted curves
   fitted_curves <- predict_fitted_uni(model = model, grid = grid,
                                       var_comp = var_comp)
-  fitted_curves <- funData(argvals = grid, X = matrix(fitted_curves$y_fit,
+  fitted_curves <- funData::funData(argvals = grid,
+                                    X = matrix(fitted_curves$y_fit,
                                                       ncol = length(grid),
                                                       byrow = TRUE))
 
@@ -479,7 +481,7 @@ extract_components_uni <- function (model) {
   eigenfcts <- lapply(names(var_comp), function (x) {
     y <- model[[grep("^fpc_hat_", names(model))]][[
       paste0("phi_", x, "_hat_grid")]]
-    y <- funData(argvals = grid, X = t(y))
+    y <- funData::funData(argvals = grid, X = t(y))
     y
   })
   names(eigenfcts) <- names(var_comp)
@@ -489,20 +491,21 @@ extract_components_uni <- function (model) {
   cov_preds <- model[[grep("^fpc_famm_", names(model))]]
   covs <- lapply(cov_preds[grep("^famm_cb_", names(cov_preds))],
                  function (x) {
-    funData(argvals = grid, X = t(x$value))
+    funData::funData(argvals = grid, X = t(x$value))
   })
-  covs <- c(int = funData(argvals = grid, X = t(rep(cov_preds[["intercept"]],
-                                                     times = length(grid)))),
+  covs <- c(int = fundData:funData(argvals = grid,
+                                   X = t(rep(cov_preds[["intercept"]],
+                                             times = length(grid)))),
             covs)
   ses <- lapply(cov_preds[grep("^famm_cb_", names(cov_preds))],
                 function (x) {
-                  funData(argvals = grid, X = t(x$se))
+                  funData::funData(argvals = grid, X = t(x$se))
                 })
-  ses <- c(int = funData(argvals = grid,
-                         X = t(rep(sqrt(vcov(cov_preds$famm_estim)[
-                           "(Intercept)", "(Intercept)"]),
-                                                    times = length(grid)))),
-            ses)
+  ses <- c(int = funData::funData(argvals = grid,
+                                  X = t(rep(sqrt(vcov(cov_preds$famm_estim)[
+                                    "(Intercept)", "(Intercept)"]),
+                                    times = length(grid)))),
+           ses)
   cov_preds <- list(fit = covs, se.fit = ses)
 
 
@@ -510,7 +513,7 @@ extract_components_uni <- function (model) {
   ran_preds <- lapply(names(var_comp), function (x) {
     y <- model[[grep("^fpc_famm_hat", names(model))]][[
       paste0("famm_predict_", x)]]
-    y <- funData(argvals = grid, X = y)
+    y <- funData::funData(argvals = grid, X = y)
     y
   })
   names(ran_preds) <- names(var_comp)
@@ -579,8 +582,9 @@ predict_fitted_uni <- function (model, grid = seq(0, 1, length.out = 100),
   }
 
   # Predict fitted values and attach to data.frame
-  pred <- predict.bam(model[[grep("^fpc_famm_hat_", names(model))]]$famm_estim,
-                      newdata = newdat, type = "link")
+  pred <- mgcv::predict.bam(model[[grep("^fpc_famm_hat_",
+                                        names(model))]]$famm_estim,
+                            newdata = newdat, type = "link")
   newdat <- cbind(newdat, y_fit = as.vector(pred))
 
   newdat
