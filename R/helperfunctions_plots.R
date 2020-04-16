@@ -6,10 +6,9 @@
 ################################################################################
 ################################################################################
 
-#-------------------------------------------------------------------------------
-# Function to Extract the FPCs and Output a Data.Frame
-#-------------------------------------------------------------------------------
-#' Extract the FPCs and Output a Data.Frame
+
+# Fct Extract Data for FPC Plot -------------------------------------------
+#' Extract Data for FPC Plot
 #'
 #' This is an internal function. It gives as an output the data set necessary to
 #' plot the eigenfunctions. It is meant to be general enough to also include
@@ -87,4 +86,83 @@ fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
   dat
 
 }
-#-------------------------------------------------------------------------------
+
+
+
+# Fct Extract Data for Covariate Plot -------------------------------------
+
+#
+#' Extract Data for Covariate Plot
+#'
+#' This is an internal function. It gives as an output the data set necessary to
+#' plot the covariate effects. It is meant to be general enough to also include
+#' more than two dimensions.
+#'
+#' @param int_include Include the estimate and uncertainty of the scalar
+#' intercept in the values of the functional intercept. Defaults to TRUE.
+#' @param m_fac Multiplication factor to represent the confidence interval of
+#' the estimates.
+#' @inheritParams fpc_plot_helper
+#' @importFrom magrittr %>%
+covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
+                                  two_d = FALSE, multi = TRUE, m_fac = 1.96) {
+
+  if (!multi) {
+    stop("Not yet implemented for univariate models.")
+  }
+
+  # Extract the covariate effects
+  if (missing(model)) {
+
+    # mcomp is given
+
+    # Handle intercept differently whether the scalar intercept is included with
+    # the functional intercept or not
+    if (int_include) {
+      # Add scalar and functional intercept
+      mcomp$cov_preds$fit[[2]] <- mcomp$cov_preds$fit[[2]] +
+        mcomp$cov_preds$fit[[1]]
+      mcomp$cov_preds$se.fit[[2]] <- mcomp$cov_preds$se.fit[[2]] +
+        mcomp$cov_preds$se.fit[[1]]
+    }
+    mcomp$cov_preds$fit[[1]] <- NULL
+    mcomp$cov_preds$se.fit[[1]] <- NULL
+
+  } else {
+
+    # model is given
+    # --- NOT IMPLEMENTED ---
+    stop("Not implemented for model. Maybe use extract_components() first.")
+
+  }
+
+  # Collapse the list of multiFunData objects to
+  data_list <- lapply(mcomp$cov_preds, function (x) {
+    out_outer <- lapply(seq_along(x), function (y) {
+      out_inner <- multifamm:::funData2DataFrame(x[[y]])
+      out_inner$cov <- y - 1
+      out_inner
+    })
+    out_outer <- do.call(rbind, out_outer)
+  })
+
+  # Construct the data
+  dat <- data_list$fit %>%
+    dplyr::mutate(dim = factor(dim, labels = dimlabels),
+                  obs = NULL,
+                  effect = factor(cov,
+                                  labels = paste0("f[", unique(cov), "](t)")),
+                  y_p = y + m_fac*data_list$se.fit$y,
+                  y_m = y - m_fac*data_list$se.fit$y)
+
+  # if a two dimensional way of representing the data is more natural, then
+  # rearrange the data set
+  if (two_d) {
+
+    # --- NOT IMPLEMENTED ---
+
+  }
+
+  dat
+
+}
