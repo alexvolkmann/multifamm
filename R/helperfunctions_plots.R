@@ -8,6 +8,7 @@
 
 
 # Fct Extract Data for FPC Plot -------------------------------------------
+
 #' Extract Data for FPC Plot
 #'
 #' This is an internal function. It gives as an output the data set necessary to
@@ -91,7 +92,6 @@ fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
 
 # Fct Extract Data for Covariate Plot -------------------------------------
 
-#
 #' Extract Data for Covariate Plot
 #'
 #' This is an internal function. It gives as an output the data set necessary to
@@ -163,6 +163,52 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
 
   }
 
+  dat
+
+}
+
+
+
+# Fct Extract Data for Covariance Surface Plot ----------------------------
+
+#' Extract Data for Covariance Surface Plot
+#'
+#' This is an internal function. It gives as an output the data set necessary to
+#' plot the covariance surface. Probably not apt for more than two dimensions.
+#'
+#' @inheritParams fpc_plot_helper
+covariance_surf_plot_helper <- function(mcomp, component, dimlabels) {
+
+  # Extract the matrix of Eigenfunctions
+  mat <- do.call(rbind, lapply(mcomp$eigenfcts[[component]],
+                               function (x) t(x@X)))
+
+  # Construct a diagonal matric containing the Eigenvalues
+  dia <- diag(mcomp$eigenvals[[component]],
+              nrow = length(mcomp$eigenvals[[component]]))
+
+  # Compute the Auto- and Cross-covariance
+  cov_mat <- mat %*% dia %*% t(mat)
+
+  # Extract the grid on which the fPCs are computed
+  grid <- unlist(mcomp$eigenfcts[[component]]@.Data[[1]]@argvals)
+
+  # Name the rows and columns for matrix transformation to data.frame
+  rownames(cov_mat) <- colnames(cov_mat) <- rep(grid, times = 2)
+
+  # Create data.frame for plotting
+  dat <- data.frame(
+    row_dim = rep(rep(dimlabels, each = length(grid)),
+                  times = length(dimlabels)*length(grid)),
+    col_dim = rep(dimlabels,
+                  each = length(dimlabels) * length(grid) * length(grid)),
+    row = as.numeric(rownames(cov_mat)[row(cov_mat)]),
+    col = as.numeric(colnames(cov_mat)[col(cov_mat)]),
+    value = c(cov_mat)
+  )
+
+  # Reverse the order of levels for more interpretable plot
+  dat$col_dim <- factor(dat$col_dim, levels = rev(levels(dat$col_dim)))
   dat
 
 }
