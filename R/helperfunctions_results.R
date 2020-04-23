@@ -38,18 +38,25 @@ rrMSE <- function (theta_true, theta_estim) {
 #------------------------------------------------------------------------------#
 # Multivariate Root Relative Mean Squared Error for Functions
 #------------------------------------------------------------------------------#
+#' Multivariate Root Relative Mean Squared Error for Functions
+#'
+#' This is an internal function. Calculate the multivariate root relative mean
+#' squared error for funcitons. For eigenfunctions, which are only defined up to
+#' a sign change, there is the option to flip the functions first if the flipped
+#' functions seems to be closer to the true function
+#'
+#' @param fun_true MultiFunData object containing the true functions.
+#' @param fun_estim MultiFunData object containing the estimated functions.
+#' @param flip Are the estimated functions to be flipped before calculating the
+#'  mrrMSE? Defaults to FALSE.
 mrrMSE <- function (fun_true, fun_estim, flip = FALSE) {
 
-  # Arguments
-  # fun_true  : True function
-  # fun_estim : Estimated function
-  # flip      : Are estimated functions to be flipped?
-
   if (flip == TRUE) {
-    fun_estim <- flipFuns(refObject = fun_true, newObject = fun_estim)
+    fun_estim <- funData::flipFuns(refObject = fun_true, newObject = fun_estim)
   }
 
-  sqrt(mean(norm(fun_true - fun_estim)) / mean(norm(fun_true)))
+  sqrt(mean(funData::norm(fun_true - fun_estim)) /
+         mean(funData::norm(fun_true)))
 
 }
 #------------------------------------------------------------------------------#
@@ -413,11 +420,22 @@ compute_fitted_sim <- function (fitted_cu, I = 10, J = 16, reps = 5) {
 #------------------------------------------------------------------------------#
 # Transform a funData object to an Data.Frame
 #------------------------------------------------------------------------------#
-funData2DataFrame <- function(fundata, multifun = TRUE) {
-
-  # Arguments
-  # fundata   : Fundata object to be converted to a data frame
-  # multifun  : Is the object a multiFunData object - DEPRECATED -
+#' Transform a funData object to an Data.Frame
+#'
+#' This is an internal function. It transform a funData object to a data.frame
+#' so that it is easy to plot it using ggplot. It internally checks if the
+#' object is a multiFunData object.
+#'
+#' @param fundata FunData or MultiFundata object to transform.
+#' @return A data.frame with four variables
+#'   \itemize{
+#'     \item \code{t} (num): the functional argument.
+#'     \item \code{y} (num): the functional value.
+#'     \item \code{dim} (int): the number of the dimension (position in the
+#'     multiFunData object).
+#'     \item \code{obs} (int): the number of the observation in the funData
+#'     object.}
+funData2DataFrame <- function(fundata) {
 
   # Automatic checking if the funData object belongs to class multiFunData
   multifun <- "multiFunData" %in% class(fundata)
