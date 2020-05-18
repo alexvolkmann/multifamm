@@ -43,7 +43,7 @@ fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
   } else {
 
     # model is given
-    meanfun <- predict_mean(model = model, multi = multi, dimlabels = dimlabels)
+    meanfun <- predict_mean(model = model, multi = multi, dimnames = dimlabels)
     meanfun <- multifamm:::funData2DataFrame(fundata = meanfun)
     phi <- multifamm:::funData2DataFrame(fundata =
                                            model$mfpc[[component]]$functions)
@@ -128,23 +128,51 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
     mcomp$cov_preds$fit[[1]] <- NULL
     mcomp$cov_preds$se.fit[[1]] <- NULL
 
+    # Collapse the list of multiFunData objects to
+    data_list <- lapply(mcomp$cov_preds, function (x) {
+      out_outer <- lapply(seq_along(x), function (y) {
+        out_inner <- multifamm:::funData2DataFrame(x[[y]])
+        out_inner$cov <- y - 1
+        out_inner
+      })
+      out_outer <- do.call(rbind, out_outer)
+    })
+
   } else {
 
     # model is given
-    # --- NOT IMPLEMENTED ---
-    stop("Not implemented for model. Maybe use extract_components() first.")
+
+    cov_preds <- multifamm:::predict_covs(model = model, method = "mul",
+                                          type = "terms", unconditional = FALSE)
+    data_list <- lapply(cov_preds, function (x) {
+
+      # Adjust the data by removing/adding columns
+      x <- x[, ! grepl(paste(c("subject_long", "word_long", "n_long"),
+                    collapse = "|"), colnames(x))]
+      sc_ints <- which(colnames(x) %in% paste0("dim", dimlabels))
+      if (int_include) {
+        # Add scalar and functional intercept
+        fu_ints <- which(colnames(x) %in% paste0("s(t):dim", dimlabels))
+        x[, fu_ints] <- x[, fu_ints] + x[, sc_ints]
+      } else {
+        # Otherwise remove the scalar intercept from the data set
+        print("Note: The scalar intercept is not included in the output.\n")
+      }
+      x <- x[, -sc_ints]
+
+      # Transform the data
+      fu_ints <- which(colnames(x) %in% paste0("s(t):dim", dimlabels))
+      colnames(x)[fu_ints] <- paste0(colnames(x[, fu_ints]), ".0")
+      x <- x[, order(colnames(x))]
+      number_covs <- ncol(x) / length(dimlabels)
+      x <- data.frame(t = seq(0, 1, length.out = 100),
+                      y = as.vector(x),
+                      dim = rep(sort(dimlabels), each = number_covs*100),
+                      cov = rep(seq_len(number_covs)-1, each = 100))
+      x
+    })
 
   }
-
-  # Collapse the list of multiFunData objects to
-  data_list <- lapply(mcomp$cov_preds, function (x) {
-    out_outer <- lapply(seq_along(x), function (y) {
-      out_inner <- multifamm:::funData2DataFrame(x[[y]])
-      out_inner$cov <- y - 1
-      out_inner
-    })
-    out_outer <- do.call(rbind, out_outer)
-  })
 
   # Construct the data
   dat <- data_list$fit %>%
