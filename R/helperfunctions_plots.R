@@ -105,7 +105,7 @@ fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
 #' @inheritParams fpc_plot_helper
 #' @importFrom magrittr %>%
 covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
-                                  two_d = FALSE, multi = TRUE, m_fac = 1.96) {
+                                  multi = TRUE, m_fac = 1.96) {
 
   if (!multi) {
     stop("Not yet implemented for univariate models.")
@@ -183,17 +183,79 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
                   y_p = y + m_fac*data_list$se.fit$y,
                   y_m = y - m_fac*data_list$se.fit$y)
 
-  # if a two dimensional way of representing the data is more natural, then
-  # rearrange the data set
-  if (two_d) {
-
-    # --- NOT IMPLEMENTED ---
-
-  }
-
   dat
 
 }
+
+
+
+# Fct Transform Covariate Helper Data For 2D Case -------------------------
+
+#' Transform Covaraiate Effect Plot Data for 2D Case
+#'
+#' This is an internal function. It gives as an output the data set necessary to
+#' plot 2D trajectories of the effect plots.
+#'
+#' If a vector is supplied to covs, then the sum of the first elements up to the
+#' second to last element is the given in the variable ... and the whole sum is
+#' given in the variable ...
+#'
+#' @param data Data containing the covariate effect information as provided by
+#'   covariate_plot_helper().
+#' @param covs Covariate effects to be plotted. Can also be a vector if e.g. an
+#'   interaction is to be plotted. Then, the interaction should be the last
+#'   element of the vector. Defaults to the intercept.
+#' @param indicator Two element vector containing the suffix indicating the 2D
+#'   axis (first for x, then for y axis). Defaults to labels ending with ".x"
+#'   and ".y".
+#' @importFrom magrittr %>%
+covariate_plot_helper_2d_transform <- function(data, covs = 0L,
+                                               indicator = c("\\.x", "\\.y")) {
+
+  # Select the covariate
+  if (length(covs) == 1) {
+    dat <- data %>%
+      dplyr::filter(cov == covs) %>%
+      dplyr::select(-cov, -effect)
+
+    # Extract the dimension info
+    dat$axis <- as.factor(ifelse(grepl(indicator[1], dat$dim), "x", "y"))
+    dat$dim <- as.factor(gsub(paste( indicator, collapse = "|"), "", dat$dim))
+
+    # Reshape the data to wide format
+    dat <- dat %>%
+      dplyr::rename(val = y, val_m = y_m, val_p = y_p) %>%
+      tidyr::pivot_wider(names_from = axis, values_from = c(val, val_m, val_p))
+    return(dat)
+
+  } else {
+
+    # recursively apply this function for one covariate
+    dat_list <- lapply(covs, covariate_plot_helper_2d_transform, data = data,
+                       indicator = indicator)
+
+    # devine a function that adds multiple covariate effects
+    sum_over_effects <- function (dat_list, covs) {
+      dat <- dat_list[[1]]
+      dat[, grep("val", names(dat))] <- Reduce("+",
+        lapply(dat_list[seq_along(covs)], function(x){
+          x[, grep("val", names(dat))]
+        }))
+      dat
+    }
+
+    # create two data frames with the sum without the last covariate effect and
+    # one with all (call it interaction)
+    dat <- sum_over_effects(dat_list, covs = covs[-length(covs)])
+    dat_int <- sum_over_effects(dat_list, covs = covs)
+    dat <- dplyr::right_join(dat, dat_int, by = c("t", "dim"),
+                             suffix = c("", "_int"))
+    dat
+
+  }
+
+}
+
 
 
 
@@ -240,3 +302,4 @@ covariance_surf_plot_helper <- function(mcomp, component, dimlabels) {
   dat
 
 }
+

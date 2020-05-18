@@ -1,7 +1,7 @@
 Package: multifamm
 Type: Package
 Title: Multivariate Functional Additive Mixed Models
-Version: 0.1.0.9011
+Version: 0.1.0.9012
 Authors@R: person("Alexander", "Volkmann", 
     email = "alexander.volkmann@hu-berlin.de", role = c("aut", "cre"))
 Description: An implementation for multivariate functional additive mixed
