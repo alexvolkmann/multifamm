@@ -9,7 +9,6 @@ covariate_plot_helper(
   mcomp,
   dimlabels,
   int_include = TRUE,
-  two_d = FALSE,
   multi = TRUE,
   m_fac = 1.96
 )
@@ -25,17 +24,18 @@ extract_components().}
 \item{int_include}{Include the estimate and uncertainty of the scalar
 intercept in the values of the functional intercept. Defaults to TRUE.}
 
-\item{two_d}{Is a two dimensional representation (e.g. x and y coordinate) a
-better representation for the data. Defaults to FALSE (one variable).}
-
 \item{multi}{Is the model a multifamm or a sparseFLMM model. Defaults to TRUE
 (multifamm model).}
 
 \item{m_fac}{Multiplication factor to represent the confidence interval of
-the estimates.}
+the estimates. Defaults to 1.96.}
 }
 \description{
 This is an internal function. It gives as an output the data set necessary to
 plot the covariate effects. It is meant to be general enough to also include
 more than two dimensions.
+}
+\details{
+Note that the final data set might be differently ordered depending on
+whether the model or the model components are used as a starting point.
 }

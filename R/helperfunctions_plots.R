@@ -98,10 +98,13 @@ fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
 #' plot the covariate effects. It is meant to be general enough to also include
 #' more than two dimensions.
 #'
+#' Note that the final data set might be differently ordered depending on
+#' whether the model or the model components are used as a starting point.
+#'
 #' @param int_include Include the estimate and uncertainty of the scalar
 #' intercept in the values of the functional intercept. Defaults to TRUE.
 #' @param m_fac Multiplication factor to represent the confidence interval of
-#' the estimates.
+#' the estimates. Defaults to 1.96.
 #' @inheritParams fpc_plot_helper
 #' @importFrom magrittr %>%
 covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
@@ -181,7 +184,8 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
                   effect = factor(cov,
                                   labels = paste0("f[", unique(cov), "](t)")),
                   y_p = y + m_fac*data_list$se.fit$y,
-                  y_m = y - m_fac*data_list$se.fit$y)
+                  y_m = y - m_fac*data_list$se.fit$y,
+                  se = data_list$se.fit$y)
 
   dat
 
@@ -208,9 +212,11 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
 #' @param indicator Two element vector containing the suffix indicating the 2D
 #'   axis (first for x, then for y axis). Defaults to labels ending with ".x"
 #'   and ".y".
+#' @inheritParams covariate_plot_helper
 #' @importFrom magrittr %>%
 covariate_plot_helper_2d_transform <- function(data, covs = 0L,
-                                               indicator = c("\\.x", "\\.y")) {
+                                               indicator = c("\\.x", "\\.y"),
+                                               m_fac = 1.96) {
 
   # Select the covariate
   if (length(covs) == 1) {
@@ -220,12 +226,13 @@ covariate_plot_helper_2d_transform <- function(data, covs = 0L,
 
     # Extract the dimension info
     dat$axis <- as.factor(ifelse(grepl(indicator[1], dat$dim), "x", "y"))
-    dat$dim <- as.factor(gsub(paste( indicator, collapse = "|"), "", dat$dim))
+    dat$dim <- as.factor(gsub(paste(indicator, collapse = "|"), "", dat$dim))
 
     # Reshape the data to wide format
     dat <- dat %>%
       dplyr::rename(val = y, val_m = y_m, val_p = y_p) %>%
-      tidyr::pivot_wider(names_from = axis, values_from = c(val, val_m, val_p))
+      tidyr::pivot_wider(names_from = axis,
+                         values_from = c(val, val_m, val_p, se))
     return(dat)
 
   } else {
@@ -234,13 +241,14 @@ covariate_plot_helper_2d_transform <- function(data, covs = 0L,
     dat_list <- lapply(covs, covariate_plot_helper_2d_transform, data = data,
                        indicator = indicator)
 
-    # devine a function that adds multiple covariate effects
+    # define a function that adds multiple covariate effects
     sum_over_effects <- function (dat_list, covs) {
-      dat <- dat_list[[1]]
-      dat[, grep("val", names(dat))] <- Reduce("+",
+      dat <- dat_list[[length(covs)]]
+      dat[, grep("val_[xy]", names(dat))] <- Reduce("+",
         lapply(dat_list[seq_along(covs)], function(x){
-          x[, grep("val", names(dat))]
+          x[, grep("val_[xy]", names(dat))]
         }))
+      dat <- dat[, -grep("val_[mp]", names(dat))]
       dat
     }
 
@@ -248,8 +256,15 @@ covariate_plot_helper_2d_transform <- function(data, covs = 0L,
     # one with all (call it interaction)
     dat <- sum_over_effects(dat_list, covs = covs[-length(covs)])
     dat_int <- sum_over_effects(dat_list, covs = covs)
-    dat <- dplyr::right_join(dat, dat_int, by = c("t", "dim"),
-                             suffix = c("", "_int"))
+    dat <- dat %>%
+      dplyr::right_join(dat_int, by = c("t", "dim"),
+                             suffix = c("", "_int")) %>%
+      select(-se_x, -se_y) %>%
+      mutate(val_m_x_int = val_x_int - m_fac * se_x_int,
+             val_m_y_int = val_y_int - m_fac * se_y_int,
+             val_p_x_int = val_x_int + m_fac * se_x_int,
+             val_p_y_int = val_y_int + m_fac * se_y_int) %>%
+      as.data.frame()
     dat
 
   }
