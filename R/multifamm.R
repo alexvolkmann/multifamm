@@ -82,6 +82,9 @@
 #'   }
 #' @param final_method Function used for estimation of final model to allow for
 #'   potential heteroscedasticity ("w_bam", "bam", "gamm", "gaulss").
+#' @param weight_refit Get the weights for the weighted bam by first refitting
+#'   the model under an independence assumption but with mfpc basis functions.
+#'   Defaults to FALSE.
 #' @param ... Additional arguments to be passed to (mainly) the underlying
 #'   sparseFLMM function.
 #' @return A list with four elements
@@ -118,7 +121,8 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
                       mfpc_weight = FALSE, mfpc_cutoff = 0.95,
                       number_mfpc = NULL,
                       mfpc_cut_method = c("total_var", "unidim"),
-                      final_method = c("w_bam", "bam", "gamm", "gaulss"), ...){
+                      final_method = c("w_bam", "bam", "gamm", "gaulss"),
+                      weight_refit = FALSE, ...){
 
   # Match arguments that are chosen from list of options
   final_method <- match.arg(final_method)
@@ -185,7 +189,7 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   cat("--------------------------------------\n")
 
   m2 <- final_model(formula = formula, data = data, final_method = final_method,
-                    model_list = model_list)
+                    model_list = model_list, weight_refit = weight_refit)
 
   # List of results as output
   out <- list("model" = m2,

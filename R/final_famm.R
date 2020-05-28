@@ -51,7 +51,7 @@ create_formula <- function(data, MFPC, bs, bf_mean, m_mean){
 #------------------------------------------------------------------------------#
 # Compute Final Model on All the Dimensions
 #------------------------------------------------------------------------------#
-final_model <- function(formula, data, final_method, model_list){
+final_model <- function(formula, data, final_method, model_list, weight_refit){
 
   # Arguments
   # formula     : Formula for model estimation on all dimensnions
@@ -70,10 +70,16 @@ final_model <- function(formula, data, final_method, model_list){
 
          # Assumption: Heteroscedasticity depending on dimension
          "w_bam" = {
-           weights <- sapply(model_list, function(x) {
-             sig <- grep("^cov_hat_", names(x))
-             1 / x[[sig]]$sigmasq
-           })
+           if (!weight_refit) {
+             weights <- sapply(model_list, function(x) {
+               sig <- grep("^cov_hat_", names(x))
+               1 / x[[sig]]$sigmasq
+             })
+           } else {
+             # refit the model to get an update of the sigma^2 estimate
+             weights <- refit_for_weights(formula = formula, data = data,
+                                          model_list = model_list)
+           }
            weights <- rep(weights, times = table(data$dim))
            data$norm_weights <- weights/mean(weights)
            mgcv::bam(formula = formula, data = data, weights = norm_weights,
@@ -94,3 +100,35 @@ final_model <- function(formula, data, final_method, model_list){
 
 }
 #------------------------------------------------------------------------------#
+
+
+
+#------------------------------------------------------------------------------#
+# Compute Final Model on All the Dimensions
+#------------------------------------------------------------------------------#
+#' Refit the model under an independence assumption
+#'
+#' This is an internal function. Refit the model under an independence
+#' assumption now with the basis functions from the MFPCA. Goal is to extract an
+#' estimate for the error variances.
+#'
+#' @param formula Formula to fit the final model.
+#' @param data Data that contains all the variables specified in formula.
+#' @param model_list List containing sparseFLMM objects for each dimension
+refit_for_weights <- function(formula, data, model_list){
+
+  # remove the by argument from the smooth terms
+  formula_indep <- paste(formula)
+  formula_indep[3] <- gsub(", by = dim[.a-z]*[.1-9]*", "", formula_indep[3])
+  formula_indep[3] <- sub("0 \\+ dim \\+", "", formula_indep[3])
+  formula_indep <- as.formula(paste(formula_indep[2], formula_indep[1],
+                                    formula_indep[3]))
+
+  # fit the model on a subdataset and extract the sigma estimate
+  weights <- sapply(names(model_list), function (x) {
+    dat <- subset(data, dim == x)
+    1 / mgcv::bam(formula = formula_indep, data = dat, discrete = TRUE)$sig2
+  })
+  weights
+
+}

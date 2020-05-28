@@ -29,6 +29,7 @@ multiFAMM(
   number_mfpc = NULL,
   mfpc_cut_method = c("total_var", "unidim"),
   final_method = c("w_bam", "bam", "gamm", "gaulss"),
+  weight_refit = FALSE,
   ...
 )
 }
@@ -103,6 +104,10 @@ variance component e.g. list("E" = x, "B" = y).}
 
 \item{final_method}{Function used for estimation of final model to allow for
 potential heteroscedasticity ("w_bam", "bam", "gamm", "gaulss").}
+
+\item{weight_refit}{Get the weights for the weighted bam by first refitting
+the model under an independence assumption but with mfpc basis functions.
+Defaults to FALSE.}
 
 \item{...}{Additional arguments to be passed to (mainly) the underlying
 sparseFLMM function.}
