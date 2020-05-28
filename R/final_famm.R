@@ -82,8 +82,10 @@ final_model <- function(formula, data, final_method, model_list, weight_refit){
            }
            weights <- rep(weights, times = table(data$dim))
            data$norm_weights <- weights/mean(weights)
-           mgcv::bam(formula = formula, data = data, weights = norm_weights,
-                     discrete = TRUE)
+           m <- mgcv::bam(formula = formula, data = data,
+                          weights = norm_weights, discrete = TRUE)
+           m$orig_weights <- weights
+           m
          },
 
          # Assumption: Heteroscedasticity depending on dimension
