@@ -60,7 +60,10 @@ extract_components <- function (model, dimnames) {
   uni_vars <- sapply(model$model_indep, function (x) {
     x[[grep("^cov_hat_", names(x))]]$sigmasq_int
   })
-
+  # Univariate total variance as estimated from the independent models
+  total_var <- sapply(model$model_indep, function (x) {
+    x[[grep("^fpc_hat_", names(x))]]$total_var
+  })
 
   # Eigenvalues
   eigenvals <- lapply(model$mfpc, function (x) x$values)
@@ -159,7 +162,8 @@ extract_components <- function (model, dimnames) {
   # Output
   comps <- list("error_var" = list("modelweights" = modelweights,
                                    "modelsig2" = modelsig2,
-                                   "uni_vars" = uni_vars),
+                                   "uni_vars" = uni_vars,
+                                   "total_var" = total_var),
                 "eigenvals" = eigenvals,
                 "fitted_curves" = fitted_curves,
                 "eigenfcts" = eigenfcts,
