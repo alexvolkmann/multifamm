@@ -14,7 +14,7 @@ given by the output of apply_sparseFLMM()}
 (B in Cederbaum). Defaults to \code{FALSE}.}
 
 \item{mfpc_weight}{TRUE if the estimated univariate error variance is to be
-to be used as weights in the scalar product of the MFPCA.}
+used as weights in the scalar product of the MFPCA.}
 }
 \description{
 This is an internal function contained in the multiFAMM function. This step

@@ -88,7 +88,7 @@ overwritten by one_dim.}
 computed only on one dimension.}
 
 \item{mfpc_weight}{TRUE if the estimated univariate error variance is to be
-to be used as weights in the scalar product of the MFPCA.}
+used as weights in the scalar product of the MFPCA.}
 
 \item{mfpc_cutoff}{Pre-specified level of explained variance of results of
 MFPCA (1 for previous versions of mvfr).}

@@ -70,7 +70,7 @@
 #' @param one_dim Specify the name of the dimension if sparseFLMM is to be
 #'   computed only on one dimension.
 #' @param mfpc_weight TRUE if the estimated univariate error variance is to be
-#'   to be used as weights in the scalar product of the MFPCA.
+#'   used as weights in the scalar product of the MFPCA.
 #' @param mfpc_cutoff Pre-specified level of explained variance of results of
 #'   MFPCA (1 for previous versions of mvfr).
 #' @param number_mfpc List containing the number of mfPCs needed for each

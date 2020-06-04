@@ -62,20 +62,30 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
 
                    })
 
+  # Extract the total variance of each dimension as computed by the sparseFLMM
+  # function
+  total_var <- sapply(model_list, function (x) {
+    tot <- grep("^fpc_hat_", names(x))
+    x[[tot]]$total_var
+  })
+
   # Compute the number of fPCs depending on the level of explained variance
   # according to the method chosen
   number_mfpc <-  switch(mfpc_cut_method,
                          "total_var" = {
+                           tot_var <- c(mfpca_info[[1]]$weights %*% total_var)
                            compute_var(sigma_sq = sigma_sq, values = values,
-                                       mfpc_cutoff = mfpc_cutoff)
+                                       mfpc_cutoff = mfpc_cutoff,
+                                       tot_var = tot_var)
                          },
                          "unidim" = {
 
                            # Compute the number of fPCs on each dimension
-                           tmp <- mapply(function (x, y){
+                           tmp <- mapply(function (x, y, z){
                              compute_var(sigma_sq = x, values = y,
-                                         mfpc_cutoff = mfpc_cutoff)
-                           }, sigma_sq, values, SIMPLIFY = FALSE)
+                                         mfpc_cutoff = mfpc_cutoff,
+                                         tot_var = z)
+                           }, sigma_sq, values, total_var, SIMPLIFY = FALSE)
 
                            # Use the maximum of each variance component
                            # Even if there is a different variance decomposition
@@ -100,19 +110,21 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
 #------------------------------------------------------------------------------#
 # Attach Weighted Functional Principal Components to the Data
 #------------------------------------------------------------------------------#
-compute_var <- function(sigma_sq, values, mfpc_cutoff){
-
-  # Arguments
-  # sigma_sq        : Vector containing the estimated variances on each
-  #                     dimension
-  # values          : List containing the multivariate Eigenvalues for each
-  #                     variance component
-  # mfpc_cutoff     : Pre-specified level of explained variance of results of
-  #                     MFPCA
-
-
-  # Compute the full variance using the total variation
-  tot_var <- sum(sigma_sq) + sum(unlist(values))
+#' Compute the Number of FPCs needed
+#'
+#' This is an internal function. The function takes all the information needed
+#' to calculate how many FPCs are needed to reach the pre-specified cutoff
+#' level.
+#'
+#' @param sigma_sq Vector containing the estimated variances on each dimension.
+#' @param values List containing the multivariate Eigenvalues for each variance
+#'   component.
+#' @param mfpc_cutoff Pre-specified level of explained variance of results of
+#'   MFPCA.
+#' @param tot_var Scalar with the value of the total variance as computed by the
+#'   univariate sparseFLMM.
+#'
+compute_var <- function(sigma_sq, values, mfpc_cutoff, tot_var){
 
   # Compute the variance that needs to be explained after subtracting
   # the error variance
