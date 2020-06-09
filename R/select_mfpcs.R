@@ -40,27 +40,22 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
   }
 
   # Extract the eigenvalues for each variance component
-  # Reweight with norm on single dimension if necessary
-  values <- switch(mfpc_cut_method,
-                   "total_var" = {
-                     lapply(MFPC, "[[", "values")
-                   },
-                   "unidim" = {
+  values <- lapply(MFPC, "[[", "values")
 
-                     # Reweight the multivariate Eigenvalues
-                     tmp <- lapply(MFPC, function (x){
-                       values <- x$values
-                       lapply(x$functions@.Data, function (y) {
-                         funData::norm(y) * values
-                       })
-                     })
-
-                     # Change the order to have a list of dimensions
-                     lapply(seq_along(model_list), function (x) {
-                       lapply(tmp, "[[", x)
-                     })
-
-                   })
+  # Reweight with squared norm on single dimension if necessary
+  if (mfpc_cut_method == "total_var") {
+    norms_sq <- c(rep(1, times = length(unlist(values))))
+    names(norms_sq) <- names(unlist(values))
+  } else {
+    # Use fundatas norm function on each dimension
+    norms_sq <- lapply(MFPC, function (x){
+      lapply(x$functions@.Data, funData::norm, squared = TRUE)
+    })
+    # Change the order to have a list of dimensions
+    norms_sq <- lapply(seq_along(model_list), function (x) {
+        unlist(lapply(norms_sq, "[[", x))
+    })
+  }
 
   # Extract the total variance of each dimension as computed by the sparseFLMM
   # function
@@ -75,6 +70,7 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
                          "total_var" = {
                            tot_var <- c(mfpca_info[[1]]$weights %*% total_var)
                            compute_var(sigma_sq = sigma_sq, values = values,
+                                       norms_sq = norms_sq,
                                        mfpc_cutoff = mfpc_cutoff,
                                        tot_var = tot_var)
                          },
@@ -82,10 +78,12 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
 
                            # Compute the number of fPCs on each dimension
                            tmp <- mapply(function (x, y, z){
-                             compute_var(sigma_sq = x, values = y,
+                             compute_var(sigma_sq = x, values = values,
+                                         norms_sq = y,
                                          mfpc_cutoff = mfpc_cutoff,
                                          tot_var = z)
-                           }, sigma_sq, values, total_var, SIMPLIFY = FALSE)
+                           }, sigma_sq, norms_sq, total_var,
+                           SIMPLIFY = FALSE)
 
                            # Use the maximum of each variance component
                            # Even if there is a different variance decomposition
@@ -119,23 +117,25 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
 #' @param sigma_sq Vector containing the estimated variances on each dimension.
 #' @param values List containing the multivariate Eigenvalues for each variance
 #'   component.
+#' @param norms_sq Vector containing the squared norms to be used as weights on
+#'   the Eigenvalues.
 #' @param mfpc_cutoff Pre-specified level of explained variance of results of
 #'   MFPCA.
 #' @param tot_var Scalar with the value of the total variance as computed by the
 #'   univariate sparseFLMM.
 #'
-compute_var <- function(sigma_sq, values, mfpc_cutoff, tot_var){
+compute_var <- function(sigma_sq, values, norms_sq, mfpc_cutoff, tot_var){
 
   # Compute the variance that needs to be explained after subtracting
   # the error variance
   var_needed <- tot_var * mfpc_cutoff - sum(sigma_sq)
 
-  # Cumulative sum of largest eigenvalues
-  cum_var <- cumsum(sort(unlist(values), decreasing = TRUE))
+  # Cumulative sum of largest eigenvalues, keeping the original order
+  val_order <- order(unlist(values), decreasing = TRUE)
+  cum_var <- cumsum(unlist(values)[val_order] * norms_sq[val_order])
 
   # How many fPCs are needed in total
-  needed <- sort(unlist(values), decreasing = TRUE)[
-    1:min(which(cum_var > var_needed))]
+  needed <- unlist(values)[val_order][1:min(which(cum_var > var_needed))]
 
   # Determine how many fPCs are needed on each component
   number_fpc <- mapply(function(x, y) {
