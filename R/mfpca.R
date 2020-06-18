@@ -24,7 +24,7 @@ prepare_mfpca <- function(model_list, fRI_B, mfpc_weight){
   })
 
   # Inflate the fPCs when there are different numbers of fPCs with zero curves
-  model_info <- inflate(model_info)
+  # model_info <- inflate(model_info)
 
   # Determine which model terms are necessary
   # Look at the scores whether there are missing values
@@ -57,9 +57,9 @@ prepare_mfpca <- function(model_list, fRI_B, mfpc_weight){
     lapply(x, function(y){
       list(type = "given",
            functions = funData(argvals = list(y$grid),
-                               X = t(y[[2]])),
-           scores = y[[3]],
-           ortho = TRUE)
+                               X = t(y[[2]])))#,
+           #scores = y[[3]],
+           #ortho = TRUE)
     })
   })
 
