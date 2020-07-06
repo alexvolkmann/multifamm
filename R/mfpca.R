@@ -24,7 +24,7 @@ prepare_mfpca <- function(model_list, fRI_B, mfpc_weight){
   })
 
   # Inflate the fPCs when there are different numbers of fPCs with zero curves
-  # model_info <- inflate(model_info)
+  model_info <- inflate(model_info)
 
   # Determine which model terms are necessary
   # Look at the scores whether there are missing values
@@ -57,9 +57,9 @@ prepare_mfpca <- function(model_list, fRI_B, mfpc_weight){
     lapply(x, function(y){
       list(type = "given",
            functions = funData(argvals = list(y$grid),
-                               X = t(y[[2]])))#,
+                               X = t(y[[2]])),
            #scores = y[[3]],
-           #ortho = TRUE)
+           ortho = FALSE)
     })
   })
 
@@ -126,10 +126,14 @@ extract_mfpca_info <- function(model_list, fRI_B){
     N_B <- if(fRI_B) x[[y]]$N_B else x[[y]]$N_E
     N_C <- x[[y]]$N_C
 
-    # Also extract number of PCs
-    list(E = list(grid = grid, E_f = E_f, E_s = E_s, N = N_E),
-         B = list(grid = grid, B_f = B_f, B_s = B_s, N = N_B),
-         C = list(grid = grid, C_f = C_f, C_s = C_s, N = N_C))
+    # Also extract eigenvalues
+    v_E <- if(fRI_B) x[[y]]$nu_E_hat else x[[y]]$nu_B_hat
+    v_B <- if(fRI_B) x[[y]]$nu_B_hat else x[[y]]$nu_E_hat
+    v_C <- x[[y]]$nu_C_hat
+
+    list(E = list(grid = grid, E_f = E_f, E_s = E_s, N = N_E, v_E = v_E),
+         B = list(grid = grid, B_f = B_f, B_s = B_s, N = N_B, v_B = v_B),
+         C = list(grid = grid, C_f = C_f, C_s = C_s, N = N_C, v_C = v_C))
 
   }, model_list, method_name, SIMPLIFY = FALSE)
 
