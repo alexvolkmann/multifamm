@@ -4,7 +4,7 @@
 \alias{compute_var}
 \title{Compute the Number of FPCs needed}
 \usage{
-compute_var(sigma_sq, values, mfpc_cutoff, tot_var)
+compute_var(sigma_sq, values, norms_sq, mfpc_cutoff)
 }
 \arguments{
 \item{sigma_sq}{Vector containing the estimated variances on each dimension.}
@@ -12,11 +12,11 @@ compute_var(sigma_sq, values, mfpc_cutoff, tot_var)
 \item{values}{List containing the multivariate Eigenvalues for each variance
 component.}
 
+\item{norms_sq}{Vector containing the squared norms to be used as weights on
+the Eigenvalues.}
+
 \item{mfpc_cutoff}{Pre-specified level of explained variance of results of
 MFPCA.}
-
-\item{tot_var}{Scalar with the value of the total variance as computed by the
-univariate sparseFLMM.}
 }
 \description{
 This is an internal function. The function takes all the information needed

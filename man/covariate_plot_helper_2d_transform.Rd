@@ -4,12 +4,8 @@
 \alias{covariate_plot_helper_2d_transform}
 \title{Transform Covaraiate Effect Plot Data for 2D Case}
 \usage{
-covariate_plot_helper_2d_transform(
-  data,
-  covs = 0L,
-  indicator = c("\\\\.x", "\\\\.y"),
-  m_fac = 1.96
-)
+covariate_plot_helper_2d_transform(data, covs = 0L,
+  indicator = c("\\\\.x", "\\\\.y"), m_fac = 1.96)
 }
 \arguments{
 \item{data}{Data containing the covariate effect information as provided by
