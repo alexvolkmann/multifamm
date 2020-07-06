@@ -62,7 +62,8 @@
 #' @param m_covs List of marginal orders for the penalty in fRI covariance
 #'   estimation (as in sparseFLMM).
 #' @param var_level Pre-specified level of explained variance on each
-#'   dimension (as in sparseFLMM).
+#'   dimension (as in sparseFLMM). Defaults to including all non-negative
+#'   Eigenvalues.
 #' @param use_famm Re-estimate the mean in FAMM context (as in sparseFLMM) -
 #'   overwritten by one_dim.
 #' @param save_model_famm Give out the FAMM model object (as in sparseFLMM) -
@@ -72,7 +73,7 @@
 #' @param mfpc_weight TRUE if the estimated univariate error variance is to be
 #'   used as weights in the scalar product of the MFPCA.
 #' @param mfpc_cutoff Pre-specified level of explained variance of results of
-#'   MFPCA (1 for previous versions of mvfr).
+#'   MFPCA. Defaults to 0.95.
 #' @param number_mfpc List containing the number of mfPCs needed for each
 #'   variance component e.g. list("E" = x, "B" = y).
 #' @param mfpc_cut_method Method to determine the level of explained variance
@@ -116,7 +117,7 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
                       m_mean = c(2,3), covariate = FALSE, num_covariates = NULL,
                       covariate_form = NULL, interaction = FALSE,
                       which_interaction = matrix(NA), bf_covs, m_covs,
-                      var_level = 0.99, use_famm = FALSE,
+                      var_level = 1, use_famm = FALSE,
                       save_model_famm = FALSE, one_dim = NULL,
                       mfpc_weight = FALSE, mfpc_cutoff = 0.95,
                       number_mfpc = NULL,

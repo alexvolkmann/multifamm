@@ -12,7 +12,7 @@ prune_mfpc(MFPC, mfpc_cutoff, model_list, mfpc_cut_method, number_mfpc,
 by the function conduct_mfpca()}
 
 \item{mfpc_cutoff}{Pre-specified level of explained variance of results of
-MFPCA (1 for previous versions of mvfr).}
+MFPCA. Defaults to 0.95.}
 
 \item{model_list}{List containing sparseFLMM objects for each dimension as
 given by the output of apply_sparseFLMM()}

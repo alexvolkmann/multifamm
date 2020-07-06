@@ -8,7 +8,7 @@ multiFAMM(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   bs = "ps", bf_mean = 8, bf_covariates = 8, m_mean = c(2, 3),
   covariate = FALSE, num_covariates = NULL, covariate_form = NULL,
   interaction = FALSE, which_interaction = matrix(NA), bf_covs, m_covs,
-  var_level = 0.99, use_famm = FALSE, save_model_famm = FALSE,
+  var_level = 1, use_famm = FALSE, save_model_famm = FALSE,
   one_dim = NULL, mfpc_weight = FALSE, mfpc_cutoff = 0.95,
   number_mfpc = NULL, mfpc_cut_method = c("total_var", "unidim"),
   final_method = c("w_bam", "bam", "gamm", "gaulss"),
@@ -57,7 +57,8 @@ estimation (as in sparseFLMM).}
 estimation (as in sparseFLMM).}
 
 \item{var_level}{Pre-specified level of explained variance on each
-dimension (as in sparseFLMM).}
+dimension (as in sparseFLMM). Defaults to including all non-negative
+Eigenvalues.}
 
 \item{use_famm}{Re-estimate the mean in FAMM context (as in sparseFLMM) -
 overwritten by one_dim.}
@@ -72,7 +73,7 @@ computed only on one dimension.}
 used as weights in the scalar product of the MFPCA.}
 
 \item{mfpc_cutoff}{Pre-specified level of explained variance of results of
-MFPCA (1 for previous versions of mvfr).}
+MFPCA. Defaults to 0.95.}
 
 \item{number_mfpc}{List containing the number of mfPCs needed for each
 variance component e.g. list("E" = x, "B" = y).}
