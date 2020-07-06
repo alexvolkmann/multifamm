@@ -114,7 +114,7 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
 compute_var <- function(sigma_sq, values, norms_sq, mfpc_cutoff){
 
   # Compute the full variance using the total variation from MFPCA
-  tot_var <- sum(sigma_sq) + sum(unlist(values))
+  tot_var <- sum(sigma_sq) + as.numeric(unlist(values) %*% unlist(norms_sq))
 
   # Compute the variance that needs to be explained after subtracting
   # the error variance
