@@ -40,7 +40,22 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
   }
 
   # Extract the eigenvalues for each variance component
+  # Set negative eigenvalues to 0
   values <- lapply(MFPC, "[[", "values")
+  if (any(unlist(values) < 0)) {
+    warns <- lapply(values, function (x) {
+      sum(x < 0)
+    })
+    for (i in seq_along(warns)) {
+      if (warns[[i]] > 0) {
+        warning(paste0(warns[[i]], " multivariate negative eigenvalues in ",
+                       names(warns)[i], " set to 0."))
+      }
+    }
+    values <- lapply(values, function (x) {
+      ifelse(x < 0, 0, x)
+    })
+  }
 
   # Reweight with squared norm on single dimension if necessary
   if (mfpc_cut_method == "total_var") {
@@ -55,6 +70,13 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
     norms_sq <- lapply(seq_along(model_list), function (x) {
         unlist(lapply(norms_sq, "[[", x))
     })
+    # Set norms corresponding to negative eigenvalues to 0
+    if (any(is.nan(unlist(norms_sq)))) {
+      norms_sq <- lapply(norms_sq, function (x) {
+        x[which(is.nan(x))] <- 0
+        x
+        })
+    }
   }
 
   # Compute the number of fPCs depending on the level of explained variance
