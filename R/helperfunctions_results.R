@@ -179,7 +179,7 @@ extract_Eigenfct_sim <- function (number, component, m_true_comp, eigenfcts,
 
   # Construct the multiFunData Object
   multiFunData(lapply(estims, function (x) {
-    funData(argvals = getArgvals(eigenfcts$mul[[1]][[component]][[1]]),
+    funData(argvals = argvals(eigenfcts$mul[[1]][[component]][[1]]),
             X = x)
   }))
 
@@ -226,7 +226,7 @@ extract_Eigenfct_sim_dim <- function (number, component, m_true_comp, eigenfcts,
 
   # Construct the multiFunData Object
   multiFunData(lapply(estims, function (x) {
-    funData(argvals = getArgvals(eigenfcts$mul[[1]][[component]][[1]]),
+    funData(argvals = argvals(eigenfcts$mul[[1]][[component]][[1]]),
             X = x)
   }))
 
@@ -273,7 +273,7 @@ extract_Eigenfct_sim_uni <- function (number, component, eigenfcts) {
   # Construct the multiFunData Object
   multiFunData(lapply(estims, function (x) {
     funData(argvals =
-              getArgvals(eigenfcts$filled_uni[[1]][[component]][[1]]$tru),
+              argvals(eigenfcts$filled_uni[[1]][[component]][[1]]$tru),
             X = x)
   }))
 
@@ -309,7 +309,7 @@ extract_Covfct_sim <- function (term, m_true_comp, cov_preds) {
 
   # Construct the multiFunData Object
   multiFunData(lapply(estims, function (x) {
-    funData(argvals = getArgvals(cov_preds$mul[[1]]$fit[[term]][[1]]),
+    funData(argvals = argvals(cov_preds$mul[[1]]$fit[[term]][[1]]),
             X = x)
   }))
 
@@ -350,7 +350,7 @@ extract_Covfct_sim_uni <- function (term, term_uni, m_true_comp, cov_preds) {
 
   # Construct the multiFunData Object
   multiFunData(lapply(estims, function (x) {
-    funData(argvals = getArgvals(cov_preds$mul[[1]]$fit[[term]][[1]]),
+    funData(argvals = argvals(cov_preds$mul[[1]]$fit[[term]][[1]]),
             X = x)
   }))
 
@@ -376,14 +376,14 @@ compute_fitted_sim <- function (fitted_cu, I = 10, J = 16, reps = 5) {
   if ("B" %in% names(fitted_cu$tru[[1]]$re)) {
     re_B_true <- lapply(seq_along(fitted_cu$tru), function (x) {
       multiFunData(lapply(fitted_cu$tru[[x]]$re$B, function (y) {
-        funData(argvals = getArgvals(y),
+        funData(argvals = argvals(y),
                 X = y@X[rep(1:nrow(y@X), times = reps_B), ])
       }))
     })
   } else {
     # Zero object
     re_B_true <- lapply(seq_along(fitted_cu$tru), function (x) {
-      argvals <- getArgvals(fitted_cu$tru[[x]]$mu[[1]])
+      argvals <- argvals(fitted_cu$tru[[x]]$mu[[1]])
       multiFunData(lapply(seq_along(fitted_cu$tru[[x]]$mu), function (y) {
         funData(argvals = argvals,
                 X = matrix(0, nrow = nObs(fitted_cu$tru[[x]]$mu),
@@ -396,14 +396,14 @@ compute_fitted_sim <- function (fitted_cu, I = 10, J = 16, reps = 5) {
   if ("C" %in% names(fitted_cu$tru[[1]]$re)) {
     re_C_true <- lapply(seq_along(fitted_cu$tru), function (x) {
       multiFunData(lapply(fitted_cu$tru[[x]]$re$C, function (y) {
-        funData(argvals = getArgvals(y),
+        funData(argvals = argvals(y),
                 X = y@X[rep(rep(1:nrow(y@X), times = reps_C), times = I), ])
       }))
     })
   } else {
     # Zero object
     re_C_true <- lapply(seq_along(fitted_cu$tru), function (x) {
-      argvals <- getArgvals(fitted_cu$tru[[x]]$mu[[1]])
+      argvals <- argvals(fitted_cu$tru[[x]]$mu[[1]])
       multiFunData(lapply(seq_along(fitted_cu$tru[[x]]$mu), function (y) {
         funData(argvals = argvals,
                 X = matrix(0, nrow = nObs(fitted_cu$tru[[x]]$mu),
@@ -469,7 +469,7 @@ funData2DataFrame <- function(fundata) {
 # Evaluate the model components in the simulation
 #------------------------------------------------------------------------------#
 sim_eval_components <- function (folder, m_true_comp, label_cov,
-                                 weighted = TRUE) {
+                                 weighted = TRUE, I = 9, J = 16, reps = 5) {
 
   # Arguments
   # folder      : Folder with saved objects from the simulation
@@ -628,8 +628,8 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   # Fitted values
   load(paste0(folder, "fitted_cu", w,".Rdata"))
 
-  fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = 10, J = 16,
-                                 reps = 5)
+  fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = I, J = J,
+                                 reps = reps)
 
   dat_fit <- do.call(rbind, lapply(seq_along(fitted_cu$mul), function (x) {
     data.frame(it = x,
