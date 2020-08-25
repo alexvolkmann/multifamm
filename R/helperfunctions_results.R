@@ -1100,18 +1100,8 @@ predictedUnivar2DataFrame <- function (aco_pr, epg_pr, effect,
   # If only one model is given, keep the rest of the code and produce NA output
   if(is.null(epg_pr)){
     epg_pr <- aco_pr
-<<<<<<< HEAD
     epg_pr[, ] <- NA
     mostattributes(epg_pr) <- attributes(aco_pr)
-=======
-    epg_pr <- lapply(epg_pr, function(x) {
-      y <- x
-      mostattributes(y) <- attributes(x)
-      x[, ] <- NA
-      mostattributes(x) <- attributes(y)
-      x
-    })
->>>>>>> d573f99d430d507c813988a38aac097abba8daf2
   }
 
   # Handle intercept differently
