@@ -1061,9 +1061,10 @@ predict_sparseFLMM_covar <- function (model, type = "terms",
   dat$yindex.vec <- grid
 
   # Predict data set
-  out <- predict.bam(model[[grep("^fpc_famm_hat", names(model))]]$famm_estim,
-                     newdata = dat, type = type, se.fit = TRUE,
-                     unconditional = unconditional)
+  out <- mgcv::predict.bam(model[[grep("^fpc_famm_hat",
+                                       names(model))]]$famm_estim,
+                           newdata = dat, type = type, se.fit = TRUE,
+                           unconditional = unconditional)
   out$fit <- cbind(out$fit,
         intercept = rep(model[[grep("^fpc_famm_hat",
                                     names(model))]]$famm_estim$coefficients[1],
