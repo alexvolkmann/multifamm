@@ -1078,16 +1078,36 @@ predict_sparseFLMM_covar <- function (model, type = "terms",
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
-# Transform Output of Predict Model to Data Frame
+# Transform Output of Covariate Predictions of Univariate Models to Data Frame
 #------------------------------------------------------------------------------#
-predict2DataFrame <- function (aco_pr, epg_pr, effect,
-                               grid = seq(0, 1, length.out = 100)) {
+#' Transform Output of Covariate Predictions of Univariate Models to Data Frame
+#'
+#' This is an internal function that helps to compare univariate sparseFLMM
+#' models to multiFAMM models. This functions converts the predictions of the
+#' covariate effects of one or two models as given by the function
+#' predict_sparseFLMM_covar() to a data.frame.
+#'
+#' This functions' name in the thesis was predict2DataFrame().
+#'
+#' @param aco_pr Output of the first model (dimension aco).
+#' @param epg_pr Output of the second model (dimension epg). Can be NULL.
+#' @param effect Which effect to extract. If intercept is specified (1), then
+#'   the scalar intercept is added.
+#' @param grid Grid of evaluation points. Defaults to observations on [0,1].
+predictedUnivar2DataFrame <- function (aco_pr, epg_pr, effect,
+                                       grid = seq(0, 1, length.out = 100)) {
 
-  # Arguments
-  # aco_pr  : Output of model aco
-  # epg_pr  : Output of model epg
-  # effect  : Which effect to extract
-  # grid    : Grid of evaluation points
+  # If only one model is given, keep the rest of the code and produce NA output
+  if(is.null(epg_pr)){
+    epg_pr <- aco_pr
+    epg_pr <- lapply(epg_pr, function(x) {
+      y <- x
+      mostattributes(y) <- attributes(x)
+      x[, ] <- NA
+      mostattributes(x) <- attributes(y)
+      x
+    })
+  }
 
   # Handle intercept differently
   if (effect == 1) {

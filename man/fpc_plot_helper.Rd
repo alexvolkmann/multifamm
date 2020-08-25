@@ -4,8 +4,15 @@
 \alias{fpc_plot_helper}
 \title{Extract Data for FPC Plot}
 \usage{
-fpc_plot_helper(model, mcomp, component, dimlabels, two_d = FALSE,
-  multi = TRUE, m_fac = 2)
+fpc_plot_helper(
+  model,
+  mcomp,
+  component,
+  dimlabels,
+  two_d = FALSE,
+  multi = TRUE,
+  m_fac = 2
+)
 }
 \arguments{
 \item{model}{The multifamm model from which to extract the estimates.}

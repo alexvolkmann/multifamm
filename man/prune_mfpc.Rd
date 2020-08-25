@@ -4,8 +4,14 @@
 \alias{prune_mfpc}
 \title{Prune the MFPC object to include only a prespecified level of explained var}
 \usage{
-prune_mfpc(MFPC, mfpc_cutoff, model_list, mfpc_cut_method, number_mfpc,
-  mfpca_info)
+prune_mfpc(
+  MFPC,
+  mfpc_cutoff,
+  model_list,
+  mfpc_cut_method,
+  number_mfpc,
+  mfpca_info
+)
 }
 \arguments{
 \item{MFPC}{List containing MFPC objects for each variance component as given
