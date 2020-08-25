@@ -4,8 +4,12 @@
 \alias{predict_sparseFLMM_covar}
 \title{Predict The Covariate Effects of a Univariate sparseFLMM Model}
 \usage{
-predict_sparseFLMM_covar(model, type = "terms", unconditional = FALSE,
-  grid = seq(0, 1, length.out = 100))
+predict_sparseFLMM_covar(
+  model,
+  type = "terms",
+  unconditional = FALSE,
+  grid = seq(0, 1, length.out = 100)
+)
 }
 \arguments{
 \item{model}{sparseFLMM model with covariates.}
