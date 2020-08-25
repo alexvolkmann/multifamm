@@ -318,3 +318,64 @@ covariance_surf_plot_helper <- function(mcomp, component, dimlabels) {
 
 }
 
+
+
+
+# Fct Create Data to Plot Covariate Effect Comparison Uni-Mul -------------
+
+#' Create Data to Plot Covariate Effect Comparison Uni-Mul
+#'
+#' This is an internal function. It takes a data set of estimated covariate
+#' effects of a multivariate model and compares it to univariately estimated
+#' covariate effects.
+#'
+#' @param dat_m Helper data from multivariate model.
+#' @param aco_pr Predictions from first univariate model.
+#' @param epg_pr Predictions from second univariate model. Can be NULL.
+#' @param mul_level Effect level of the multivariate model to be plotted.
+#' @param uni_effect Number of the univariate effect to be plotted.
+#' @importFrom magrittr %>%
+covariate_comp_plot_helper <- function(dat_m, aco_pr, epg_pr, mul_level,
+                                       uni_effect) {
+
+  # Have null object if epg_pr is missing
+  if (is.null(epg_pr)) {
+    epg_pr <- list("fit" = NULL, "se.fit" = NULL)
+  }
+
+  # Remove unneccessary covariate effects from multivariate data set
+  dat_m <- dat_m %>%
+    filter(effect %in% mul_level)
+
+  # Create data set for the univariate covariate effects
+  dat_u <- list("fit" = vector("list", length(uni_effect)),
+                "se.fit" = vector("list", length(uni_effect)))
+  for (i in seq_along(uni_effect)) {
+    dat_u$fit[[i]] <- multifamm:::predictedUnivar2DataFrame(
+      aco_pr = aco_pr$fit, epg_pr = epg_pr$fit, effect = uni_effect[i])
+    dat_u$se.fit[[i]] <- multifamm:::predictedUnivar2DataFrame(
+      aco_pr = aco_pr$se.fit, epg_pr = epg_pr$se.fit, effect = uni_effect[i])
+  }
+  dat_u <- lapply(dat_u, function(x) do.call(rbind, x))
+
+  # Combine the two data sources
+  dat <- cbind(dat_m,
+               y_uni = dat_u$fit$y,
+               y_uni_p = dat_u$fit$y + 1.96*dat_u$se.fit$y,
+               y_uni_m = dat_u$fit$y - 1.96*dat_u$se.fit$y,
+               se_uni = dat_u$se.fit$y)
+  dat$se_dif <- factor((dat$se - dat$se_uni)<0, labels = c("worse", "better"))
+
+  # Create the variables needed for the shaded areas
+  grid <- seq(0, 1, length.out = 100)
+  jumps <- grid[2] - grid[1]
+  box_grid <- seq(min(grid) + jumps, max(grid - jumps),
+                  length.out = length(grid) - 1)
+  dat$max_val <- max(dat[, c("y_p", "y_uni_p")], na.rm = TRUE) + 0.05
+  dat$min_val <- min(dat[, c("y_m", "y_uni_m")], na.rm = TRUE) - 0.05
+  dat$x_start <- rep(c(min(grid), box_grid), times = 2)
+  dat$x_end <- rep(c(box_grid, max(grid)), times = 2)
+
+  dat
+
+}
