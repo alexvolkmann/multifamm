@@ -345,7 +345,7 @@ covariate_comp_plot_helper <- function(dat_m, aco_pr, epg_pr, mul_level,
 
   # Remove unneccessary covariate effects from multivariate data set
   dat_m <- dat_m %>%
-    filter(effect %in% mul_level)
+    dplyr::filter(effect %in% mul_level)
 
   # Create data set for the univariate covariate effects
   dat_u <- list("fit" = vector("list", length(uni_effect)),
