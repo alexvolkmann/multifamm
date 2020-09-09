@@ -243,3 +243,46 @@ conduct_mfpca <- function(mfpca_info, mfpc_weight){
 
 }
 #------------------------------------------------------------------------------#
+
+
+
+
+# Extract Variance Information from MFPCA Object --------------------------
+#' Extract Variance Information from MFPCA Object
+#'
+#' This is an internal function contained in the multiFAMM function. This step
+#' allows to extract the information of the total variation in the data (multi-
+#' and univariate).
+#'
+#' @param MFPCA MFPCA object from which to extract multivariate eigenvalues and
+#'   univariate norms.
+extract_var_info <- function(MFPC = MFPC){
+
+  # Extract eigenvalues
+  eigenvals <- unlist(lapply(seq_along(MFPC), function (x) {
+    out <- MFPC[[x]]$values
+    names(out) <- paste0(names(MFPC)[x], 1:length(out))
+    out <- out[out>0]
+    out
+  }))
+  eigenvals[order(names(eigenvals))]
+
+  # Names of dimensions to know how many univariate norms to calculate
+  n_dim <- names(MFPC[[1]]$functions)
+
+  # Calculate univariate norms of all eigenfunctions
+  uni_norms <- lapply(n_dim, function (dim) {
+    unlist(sapply(seq_along(MFPC), function(comps){
+      out <- funData::norm(MFPC[[comps]]$functions[[dim]])
+      names(out) <- paste0(names(MFPC)[comps],
+                           seq_len(nObs(MFPC[[comps]]$functions)))
+      out <- na.omit(out)
+      out
+    }))
+  })
+
+  out <- list(eigenvals = eigenvals, uni_norms = uni_norms)
+  out
+
+}
+

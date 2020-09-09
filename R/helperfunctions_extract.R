@@ -47,7 +47,13 @@
 #'       predicted random effects.
 #'     \item \code{scores}: List containing matrices of the estimated scores.
 #'     \item \code{meanfun}: multiFunData object containing the estimated mean
-#'       function.}
+#'       function.
+#'     \item \code{var_info}: List containing all eigenvalues and univariate
+#'       norms before the MFPC pruning step
+#'       \itemize{
+#'       \item \code{eigenvals}: Vector of all multivariate eigenvalues.
+#'       \item \code{uni_norms}: List of univariate norms of all
+#'         eigenfunctions.}}
 extract_components <- function (model, dimnames) {
 
   # Fix a grid
@@ -60,10 +66,7 @@ extract_components <- function (model, dimnames) {
   uni_vars <- sapply(model$model_indep, function (x) {
     x[[grep("^cov_hat_", names(x))]]$sigmasq_int
   })
-  # Univariate total variance as estimated from the independent models
-  total_var <- sapply(model$model_indep, function (x) {
-    x[[grep("^fpc_hat_", names(x))]]$total_var
-  })
+
 
   # Eigenvalues
   eigenvals <- lapply(model$mfpc, function (x) x$values)
@@ -159,18 +162,22 @@ extract_components <- function (model, dimnames) {
   meanfun <- predict_mean(model = model, multi = TRUE, dimnames = dimnames)
 
 
+  # Variance information
+  # Can be used to compute the total variation in the data / on one dimension
+  var_info <- model$var_info
+
   # Output
   comps <- list("error_var" = list("modelweights" = modelweights,
                                    "modelsig2" = modelsig2,
-                                   "uni_vars" = uni_vars,
-                                   "total_var" = total_var),
+                                   "uni_vars" = uni_vars),
                 "eigenvals" = eigenvals,
                 "fitted_curves" = fitted_curves,
                 "eigenfcts" = eigenfcts,
                 "cov_preds" = cov_preds,
                 "ran_preds" = ran_preds,
                 "scores" = scores,
-                "meanfun" = meanfun)
+                "meanfun" = meanfun,
+                "var_info" = var_info)
 
 }
 #------------------------------------------------------------------------------#

@@ -160,8 +160,11 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   cat("--------------------------------------\n")
   cat("Compute MFPCA\n")
   cat("--------------------------------------\n")
-
   MFPC <- conduct_mfpca(mfpca_info, mfpc_weight)
+
+  # Extract the information of the multivariate eigenvalues and norms to be able
+  # to compute the total variation in the data (only additional info)
+  var_info <- extract_var_info(MFPC = MFPC)
 
   # Prune the MFPC to prespecified cutoff level of variance explained
   MFPC <- prune_mfpc(MFPC = MFPC, mfpc_cutoff = mfpc_cutoff,
@@ -196,7 +199,8 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   out <- list("model" = m2,
               "model_indep" = model_list,
               "mfpc" = MFPC,
-              "data" = data)
+              "data" = data,
+              "var_info" = var_info)
   out
 
 }
