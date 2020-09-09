@@ -123,9 +123,9 @@ linear_interpol <- function(MFPC, data){
 # Code stems from R package funData Version 1.1
 # Only adaptation: argument 'x = unlist(object@argvals)'
 approxNA <- function (object) {
-  funData(object@argvals, t(zoo::na.approx(t(object@X),
-                                           x = unlist(object@argvals),
-                                           na.rm = FALSE)))
+  funData::funData(object@argvals, t(zoo::na.approx(t(object@X),
+                                                    x = unlist(object@argvals),
+                                                    na.rm = FALSE)))
 }
 #------------------------------------------------------------------------------#
 
