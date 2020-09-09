@@ -11,8 +11,8 @@ multiFAMM(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   var_level = 1, use_famm = FALSE, save_model_famm = FALSE,
   one_dim = NULL, mfpc_weight = FALSE, mfpc_cutoff = 0.95,
   number_mfpc = NULL, mfpc_cut_method = c("total_var", "unidim"),
-  final_method = c("w_bam", "bam", "gamm", "gaulss"),
-  weight_refit = FALSE, ...)
+  final_method = c("w_bam", "bam", "gamm", "gaulss"), weight_refit = FALSE,
+  ...)
 }
 \arguments{
 \item{data}{Data.table that contains the information with some fixed variable

@@ -4,7 +4,8 @@
 \name{phonetic}
 \alias{phonetic}
 \title{Phonetic data}
-\format{A data.frame with 50644 observations and 12 variables:
+\format{
+A data.frame with 50644 observations and 12 variables:
 \describe{
   \item{\code{dim}}{factor for identifying the acoustic (aco) and
      electropalatographic (epg) dimensions.}
@@ -23,7 +24,8 @@
      compound, reference category 'stressed'.}
  \item{\code{covariate.4}}{vowel context, reference category ia.}
  \item{\code{word_names_long}}{names of the target words}
-}}
+}
+}
 \source{
 Pouplier, Marianne and Hoole, Philip (2016): Articulatory and
   Acoustic Characteristics of German Fricative Clusters, Phonetica, 73(1),

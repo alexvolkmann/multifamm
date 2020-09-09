@@ -4,8 +4,8 @@
 \alias{gendata}
 \title{Generate Data for Simulation}
 \usage{
-gendata(I = 10, J = 10, nested = FALSE, num_dim = 2, lamB, lamC,
-  lamE, normal = TRUE, sigmasq = list(0.05, 4), dim_indep = TRUE,
+gendata(I = 10, J = 10, nested = FALSE, num_dim = 2, lamB, lamC, lamE,
+  normal = TRUE, sigmasq = list(0.05, 4), dim_indep = TRUE,
   simple_sig = TRUE, mu = function(t) {     t + sin(t) }, N_B = 1,
   N_C = 1, N_E = 1, phiB_fun, phiC_fun, phiE_fun, minsize = 10,
   maxsize = 20, min_grid = 0, max_grid = 1, grid_eval = 100,

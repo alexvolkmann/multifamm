@@ -4,7 +4,9 @@
 \name{phonetic_subset}
 \alias{phonetic_subset}
 \title{Phonetic data (subset)}
-\format{A data.frame with 1336 observations and 12 variables.}
+\format{
+A data.frame with 1336 observations and 12 variables.
+}
 \source{
 Pouplier, Marianne and Hoole, Philip (2016): Articulatory and
   Acoustic Characteristics of German Fricative Clusters, Phonetica, 73(1),

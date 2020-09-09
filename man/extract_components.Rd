@@ -30,7 +30,13 @@ A list with the following elements
       predicted random effects.
     \item \code{scores}: List containing matrices of the estimated scores.
     \item \code{meanfun}: multiFunData object containing the estimated mean
-      function.}
+      function.
+    \item \code{var_info}: List containing all eigenvalues and univariate
+      norms before the MFPC pruning step
+      \itemize{
+      \item \code{eigenvals}: Vector of all multivariate eigenvalues.
+      \item \code{uni_norms}: List of univariate norms of all
+        eigenfunctions.}}
 }
 \description{
 This is an internal function that helps to compare different models. The
