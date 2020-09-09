@@ -4,14 +4,8 @@
 \alias{covariate_plot_helper}
 \title{Extract Data for Covariate Plot}
 \usage{
-covariate_plot_helper(
-  model,
-  mcomp,
-  dimlabels,
-  int_include = TRUE,
-  multi = TRUE,
-  m_fac = 1.96
-)
+covariate_plot_helper(model, mcomp, dimlabels, int_include = TRUE,
+  multi = TRUE, m_fac = 1.96)
 }
 \arguments{
 \item{model}{The multifamm model from which to extract the estimates.}

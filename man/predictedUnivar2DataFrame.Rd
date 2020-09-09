@@ -4,12 +4,8 @@
 \alias{predictedUnivar2DataFrame}
 \title{Transform Output of Covariate Predictions of Univariate Models to Data Frame}
 \usage{
-predictedUnivar2DataFrame(
-  aco_pr,
-  epg_pr,
-  effect,
-  grid = seq(0, 1, length.out = 100)
-)
+predictedUnivar2DataFrame(aco_pr, epg_pr, effect, grid = seq(0, 1,
+  length.out = 100))
 }
 \arguments{
 \item{aco_pr}{Output of the first model (dimension aco).}
