@@ -933,3 +933,108 @@ prepare_gam_predict <- function (data, num_cov, interaction, which_inter,
 
   data
 }
+
+
+
+# Create the Coverage Array of Simulated Covariate Effects ----------------
+
+#' Create the Coverage Array of the Simulation
+#'
+#' This is an internal function. The function takes the index of the covariate
+#' to be evaluated and then checks whether the estimated covariate effect of the
+#' simulation run covers the true data generating effect function. The output is
+#' a logical array where the first dimension gives the dimension of the data,
+#' the second dimension gives the time point to be evaluated and the third
+#' dimension gives the simulation run.
+#'
+#' @param sim_curves The large list of simulation results. Use object$mul.
+#' @param gen_curves The original data generating curve as part of the output of
+#'   multifamm:::extract_components(), so use output$cov_preds.
+#' @param effec_index The index position of the effect to be evaluated in the
+#'   gen_curves and sim_curves effect lists. If the intercept is to be
+#'   evaluated, this can be specified as 1 or 2 (both scalar and functional
+#'   intercept are sumed up).
+#' @param m_fac Multiplication factor used to create the upper and lower
+#'   credibility bounds. Defaults to 1.96 (ca. 95%).
+create_coverage_array <- function (sim_curves, gen_curves, effect_index,
+                                   m_fac = 1.96) {
+
+  # Create upper and lower bounds of each simulation run
+  # Extract original curve
+  # Sum up functional and scalar intercept if necessary
+  if (effect_index %in% c(1, 2)) {
+    sim_up <- lapply(sim_curves, function (it) {
+      it$fit[[1]] + it$fit[[2]] + m_fac * (it$se.fit[[1]] + it$se.fit[[2]])
+    })
+    sim_do <- lapply(sim_curves, function (it) {
+      it$fit[[1]] + it$fit[[2]] - m_fac * (it$se.fit[[1]] + it$se.fit[[2]])
+    })
+    gen <- gen_curves$fit[[1]] + gen_curves$fit[[2]]
+  } else {
+    sim_up <- lapply(sim_curves, function (it) {
+      it$fit[[effect_index]] + m_fac * (it$se.fit[[effect_index]])
+    })
+    sim_do <- lapply(sim_curves, function (it) {
+      it$fit[[effect_index]] - m_fac * (it$se.fit[[effect_index]])
+    })
+    gen <- gen_curves$fit[[effect_index]]
+  }
+
+  # Check if the original data is inside the simulated bounds
+  coverage <- mapply(function (sim_up_it, sim_do_it) {
+    t(mapply(FUN = function (s_u, s_d, o) {
+      o@X > s_d@X & o@X < s_u@X
+    }, sim_up_it@.Data, sim_do_it@.Data, gen@.Data))
+  }, sim_up, sim_do, SIMPLIFY = FALSE)
+
+  # Order the results in an array
+  coverage <- array(unlist(coverage), dim = c(length(gen), 100,
+                                              length(sim_curves)))
+  coverage
+
+}
+
+
+
+# Prepare the Data for the Coverage Plot ----------------------------------
+
+#' Coverage plot helper function
+#'
+#' This is an internal function. The function takes a list of arrays created by
+#' the function create_coverage_array and returns a data.frame ready for
+#' plotting.
+#'
+#' @param cov_list List of arrays containing the evaluations if the estimated
+#'   coefficient effect of that simulation run is in the credibility bounds as
+#'   given by the function create_coverage_array().
+#' @param effect_index Numeric vector of the index positions of the effects to
+#'   be plotted.
+#' @param dimlabels String vector of labels used in the data set. Defaults to
+#'   labels "ACO" and "EPG".
+coverage_plot_helper <- function (cov_list, effect_index,
+                                  dimlabels = c("ACO", "EPG")) {
+
+  # Get the proportion of covered effects for each index
+  prop_list <- list()
+  for (ind in seq_along(effect_index)) {
+    prop_list[[ind]] <- apply(cov_list[[effect_index[ind]]], MARGIN = c(1, 2),
+                              function (it) {sum(it) / length(it)})
+  }
+
+  # Rearrange the proportions to a data set
+  prop_list <- lapply(prop_list, function (effect) {
+    data.frame(t = rep(seq(0, 1, length.out = 100), times = nrow(effect)),
+               y = c(t(effect)),
+               dim = rep(dimlabels, each = 100))
+  })
+
+  # Combine the effects to a data.frame and label them
+  dat <- do.call(rbind, prop_list)
+  dat$effect <- factor(rep(seq_along(effect_index),
+                           each = nrow(prop_list[[1]])),
+                       labels = paste0("f[", effect_index - 1, "](t)"))
+  dat
+
+}
+
+
