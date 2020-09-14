@@ -504,7 +504,7 @@ extract_components_uni <- function (model) {
                  function (x) {
     funData::funData(argvals = grid, X = t(x$value))
   })
-  covs <- c(int = fundData:funData(argvals = grid,
+  covs <- c(int = funData::funData(argvals = grid,
                                    X = t(rep(cov_preds[["intercept"]],
                                              times = length(grid)))),
             covs)
