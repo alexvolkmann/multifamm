@@ -360,14 +360,15 @@ extract_Covfct_sim_uni <- function (term, term_uni, m_true_comp, cov_preds) {
 #------------------------------------------------------------------------------#
 # Compute the True Values to Compare with Fitted Values
 #------------------------------------------------------------------------------#
-compute_fitted_sim <- function (fitted_cu, I = 10, J = 16, reps = 5) {
-
-  # Arguments
-  # fitted_cu   : Object saved from the simulation
-  # I           : Number of subjects
-  # J           : Number of words
-  # reps        : Number of repetitions
-
+#' Compute the True Values to Compare with Fitted Values
+#'
+#' This is an internal function. It takes the fitted curves object of the
+#' simulation and recalculates the true curves.
+#'
+#' @param fitted_cu Object saved from the simulation.
+#' @inheritParams sim_eval_components
+compute_fitted_sim <- function (fitted_cu, I = 10, J = 16, reps = 5,
+                                nested = FALSE) {
 
   reps_B <- rep(reps*J, times = I)
   reps_C <- rep(reps, times = J)
@@ -394,12 +395,21 @@ compute_fitted_sim <- function (fitted_cu, I = 10, J = 16, reps = 5) {
 
   # Has not been tested for C in names()
   if ("C" %in% names(fitted_cu$tru[[1]]$re)) {
-    re_C_true <- lapply(seq_along(fitted_cu$tru), function (x) {
-      multiFunData(lapply(fitted_cu$tru[[x]]$re$C, function (y) {
-        funData(argvals = argvals(y),
-                X = y@X[rep(rep(1:nrow(y@X), times = reps_C), times = I), ])
-      }))
-    })
+    if(!nested) {
+      re_C_true <- lapply(seq_along(fitted_cu$tru), function (x) {
+        multiFunData(lapply(fitted_cu$tru[[x]]$re$C, function (y) {
+          funData(argvals = argvals(y),
+                  X = y@X[rep(rep(1:nrow(y@X), times = reps_C), times = I), ])
+        }))
+      })
+    } else {
+      re_C_true <- lapply(seq_along(fitted_cu$tru), function (x) {
+        multiFunData(lapply(fitted_cu$tru[[x]]$re$C, function (y) {
+          funData(argvals = argvals(y),
+                  X = y@X[rep(1:nrow(y@X), each = reps), ])
+        }))
+      })
+    }
   } else {
     # Zero object
     re_C_true <- lapply(seq_along(fitted_cu$tru), function (x) {
@@ -468,45 +478,50 @@ funData2DataFrame <- function(fundata) {
 #------------------------------------------------------------------------------#
 # Evaluate the model components in the simulation
 #------------------------------------------------------------------------------#
+#' Evaluate the model components in the simulation
+#'
+#' This is an internal function. The function takes the folder containing the
+#' results of a simulation scenario and returns a data frame with relative
+#' MSE values for the separate model components.
+#'
+#' @param folder Folder with saved objects from the simulation.
+#' @param m_true_comp True model components used for the simulation.
+#' @param label_cov Vector of labels for the covariates.
+#' @param I Number of levels for component B. Defaults to 9.
+#' @param J Number of levels for component C. Defaults to 16.
+#' @param reps Number of repetitions of the levels of B and C. Defaults to 5.
+#' @param nested TRUE if the model component C is nested. Defaults to FALSE.
 sim_eval_components <- function (folder, m_true_comp, label_cov,
-                                 weighted = TRUE, I = 9, J = 16, reps = 5) {
-
-  # Arguments
-  # folder      : Folder with saved objects from the simulation
-  # m_true_comp : True model components used for the simulation
-  # label_cov   : Labels for the covariates
-  # weighted    : Was the weighted bam used to compute the models
-
-  if (weighted  == FALSE) {
-    w <- "_bam"
-  } else {
-    w <- NULL
-  }
+                                 I = 9, J = 16, reps = 5, nested = FALSE) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-  load(paste0(folder, "error_var", w,".Rdata"))
+  error_var <- load_sim_results(folder = folder, component = "error_var")
 
   true_sig <- m_true_comp$error_var$modelsig2 /
     m_true_comp$error_var$modelweights
 
   dat_err <- do.call(rbind, lapply(seq_along(error_var$mul),
                                    function (x, true) {
+
     sigma_hat <- error_var$mul[[x]]$modelsig2 / error_var$mul[[x]]$modelweights
-    if (weighted == FALSE) {sigma_hat <- rep(sigma_hat, times = 2)}
     data.frame(it = rep(x, times = length(sigma_hat)),
                hat = sigma_hat,
                no = factor(1:length(sigma_hat),
-                           labels = c("sigma[ACO]^2",
-                                      "sigma[EPG]^2")),
+                           labels = if(length(sigma_hat) == 1) {
+                             "sigma^2"
+                           } else {
+                             c(paste0("sigma[dim", 1:length(sigma_hat),
+                                      "]^2"))}),
                true = true,
                y = mapply(function (x, y) {
                  rrMSE(theta_true = x, theta_estim = y)
                }, true, sigma_hat),
                comp = factor("sigma^2"))
+
   }, true = true_sig))
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-  load(paste0(folder, "eigenvals", w,".Rdata"))
+  eigenvals <- load_sim_results(folder = folder, component = "eigenvals")
 
   dat_val <- do.call(rbind, lapply(names(m_true_comp$eigenvals), function (x) {
     do.call(rbind, lapply(seq_along(eigenvals$mul), function (y, true) {
@@ -525,8 +540,8 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   }))
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-  load(paste0(folder, "eigscores", w,".Rdata"))
-  load(paste0(folder, "eigenfcts", w,".Rdata"))
+  eigscores <- load_sim_results(folder = folder, component = "eigscores")
+  eigenfcts <- load_sim_results(folder = folder, component = "eigenfcts")
 
   eigscores$mul_flip <- lapply(seq_along(eigscores$mul), function (y) {
     scores <- lapply(names(eigscores$mul[[1]]), function (x) {
@@ -610,7 +625,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Random effects
-  load(paste0(folder, "ran_preds", w,".Rdata"))
+  ran_preds <- load_sim_results(folder = folder, component = "ran_preds")
 
   dat_ran <- do.call(rbind, lapply(names(ran_preds$mul[[1]]), function (x) {
     do.call(rbind, lapply(seq_along(ran_preds$mul), function (y) {
@@ -626,10 +641,10 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Fitted values
-  load(paste0(folder, "fitted_cu", w,".Rdata"))
+  fitted_cu <- load_sim_results(folder = folder, component = "fitted_cu")
 
   fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = I, J = J,
-                                 reps = reps)
+                                 reps = reps, nested = nested)
 
   dat_fit <- do.call(rbind, lapply(seq_along(fitted_cu$mul), function (x) {
     data.frame(it = x,
@@ -642,7 +657,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariate effects
-  load(paste0(folder, "cov_preds", w,".Rdata"))
+  cov_preds <- load_sim_results(folder = folder, component = "cov_preds")
   names <- label_cov
 
   dat_cov <- do.call(rbind, lapply(seq_along(cov_preds$mul), function (x) {
@@ -1306,8 +1321,10 @@ cov2DataFrame <- function(m_aco, m_epg, component) {
 #------------------------------------------------------------------------------#
 # Correlation Plots for Univariate and Multivariate Scores
 #------------------------------------------------------------------------------#
-# This code is an adjustment from the package GGally version 1.3.2
-# of the function ggcorr
+#' Correlation Plots for Univariate and Multivariate Scores
+#'
+#' This is an internal function. This code is an adjustment from the package
+#' GGally version 1.3.2 of the function ggcorr.
 my_corr <- function (data, method = c("pairwise", "pearson"), cor_matrix = NULL,
                      nbreaks = NULL, digits = 2, name = "", low = "#3B9AB2",
                      mid = "#EEEEEE", high = "#F21A00", midpoint = 0,
@@ -1522,3 +1539,41 @@ my_corr <- function (data, method = c("pairwise", "pearson"), cor_matrix = NULL,
   return(p)
 }
 #------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Load All Simulation Results of Model Components of a Folder
+#------------------------------------------------------------------------------#
+#' Load All Simulation Results of Model Components of a Folder
+#'
+#' This is an internal function. It takes the a folder containing simulation
+#' results and what part of the model is to be loaded. It then loads all
+#' corresponding results and concatenates them.
+#'
+#' @param folder Folder with saved objects from the simulation.
+#' @param component String of the model components to be loaded.
+load_sim_results <- function (folder, component) {
+
+  # load all elements of the folder that have the component in its name
+  files <- list.files(path = folder)
+  out <- lapply(files[grepl(component, files)], function (x) {
+    load(file.path(folder, x))
+    get(ls()[-grep("^x$", ls())])
+  })
+
+  # Combine the different simulation runs to one object
+  out <- switch(component,
+    "cov_preds" = ,
+    "eigenfcts" = ,
+    "eigenvals" = ,
+    "error_var" = {
+      list("mul" = do.call(c, lapply(out, "[[", "mul")))
+      },
+    "eigscores" = ,
+    "fitted_cu" = ,
+    "ran_preds" = {
+      list("mul" = do.call(c, lapply(out, "[[", "mul")),
+           "tru" = do.call(c, lapply(out, "[[", "tru")))
+    })
+  out
+
+}
