@@ -955,7 +955,7 @@ prepare_gam_predict <- function (data, num_cov, interaction, which_inter,
 #'   evaluated, this can be specified as 1 or 2 (both scalar and functional
 #'   intercept are sumed up).
 #' @param m_fac Multiplication factor used to create the upper and lower
-#'   credibility bounds. Defaults to 1.96 (ca. 95%).
+#'   credibility bounds. Defaults to 1.96 (ca. 95\%).
 create_coverage_array <- function (sim_curves, gen_curves, effect_index,
                                    m_fac = 1.96) {
 

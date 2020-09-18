@@ -13,7 +13,7 @@ create_coverage_array(sim_curves, gen_curves, effect_index, m_fac = 1.96)
 multifamm:::extract_components(), so use output$cov_preds.}
 
 \item{m_fac}{Multiplication factor used to create the upper and lower
-credibility bounds. Defaults to 1.96 (ca. 95%).}
+credibility bounds. Defaults to 1.96 (ca. 95\%).}
 
 \item{effec_index}{The index position of the effect to be evaluated in the
 gen_curves and sim_curves effect lists. If the intercept is to be

@@ -574,14 +574,17 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   dat_fun <- do.call(rbind, lapply(names(eigenfcts$mul[[1]]), function (x) {
     do.call(rbind, lapply(seq_along(eigenfcts$mul), function (y) {
       fcts <- eigenfcts$mul[[y]][[x]]
-      data.frame(it = rep(y, times = nObs(fcts)),
-                 no = factor(1:nObs(fcts),
-                             labels = paste0("psi[",seq_len(nObs(fcts)),
+      data.frame(it = rep(y, times = funData::nObs(fcts)),
+                 no = factor(1:funData::nObs(fcts),
+                             labels = paste0("psi[",
+                                             seq_len(funData::nObs(fcts)),
                                              "]^", x)),
-                 y = sapply(1:nObs(fcts), function (z) {
-                   mrrMSE(fun_true = extractObs(m_true_comp$eigenfcts[[x]],
-                                                obs = z),
-                          fun_estim = extractObs(fcts, obs = z), flip = TRUE)
+                 y = sapply(1:funData::nObs(fcts), function (z) {
+                   mrrMSE(
+                     fun_true = funData::extractObs(m_true_comp$eigenfcts[[x]],
+                                                    obs = z),
+                     fun_estim = funData::extractObs(fcts, obs = z),
+                     flip = TRUE)
                  }),
                  comp = "Eigenfunctions")
     }))
@@ -589,11 +592,14 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariance operator
-  auto_cross <- list(c(1,1), c(1,2), c(2,2))
+  auto_cross <- c(lapply(1:length(m_true_comp$fitted_curves),
+                         function (x) c(x, x)),
+                  combn(1:length(m_true_comp$fitted_curves),
+                        m = 2, simplify = FALSE))
   true_covs <- lapply(names(m_true_comp$eigenvals), function (x) {
     lapply(auto_cross, function (y) {
-      funData(argvals = list(seq(0,1,length.out = 100),
-                             seq(0,1,length.out = 100)),
+      funData::funData(argvals = list(seq(0,1,length.out = 100),
+                                      seq(0,1,length.out = 100)),
               X = array(covSurv(vals = m_true_comp$eigenvals[[x]],
                           fcts = m_true_comp$eigenfcts[[x]],
                           dim1 = y[1], dim2 = y[2]), dim = c(1,100,100)))
@@ -604,15 +610,16 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   dat_cop <- do.call(rbind, lapply(names(true_covs), function (x) {
     do.call(rbind, lapply(seq_along(auto_cross), function (y) {
       do.call(rbind, lapply(seq_along(eigenvals$mul), function (z) {
-        estim_cov <- funData(argvals = list(seq(0,1,length.out = 100),
+        estim_cov <- funData::funData(argvals = list(seq(0,1,length.out = 100),
                                             seq(0,1,length.out = 100)),
-                             X = array(covSurv(vals = eigenvals$mul[[z]][[x]],
-                                               fcts = eigenfcts$mul[[z]][[x]],
-                                               dim1 = auto_cross[[y]][1],
-                                               dim2 = auto_cross[[y]][2]),
-                                       dim = c(1,100,100)))
+                                      X = array(covSurv(
+                                        vals = eigenvals$mul[[z]][[x]],
+                                        fcts = eigenfcts$mul[[z]][[x]],
+                                        dim1 = auto_cross[[y]][1],
+                                        dim2 = auto_cross[[y]][2]),
+                                        dim = c(1,100,100)))
         data.frame(it = z,
-                   no = factor(paste0("C[",
+                   no = factor(paste0("K[",
                                       paste(auto_cross[[y]], collapse = ""),
                                       "]^", x)),
                    y = mrrMSE(fun_true = true_covs[[x]][[y]],
@@ -974,8 +981,8 @@ covSurv <- function (vals, fcts, dim1, dim2, multi = TRUE) {
   # Compute the Auto- and Cross-covariance
   cov <- mat %*% dia %*% t(mat)
 
-  d1 <- if (dim1 == 1) 1:100 else 101:200
-  d2 <- if (dim2 == 1) 1:100 else 101:200
+  d1 <- 1:100 + (dim1 - 1)*100
+  d2 <- 1:100 + (dim2 - 1)*100
 
   # Extract the wanted covariance surface
   cov[d1, d2]
