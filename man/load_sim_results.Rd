@@ -4,12 +4,15 @@
 \alias{load_sim_results}
 \title{Load All Simulation Results of Model Components of a Folder}
 \usage{
-load_sim_results(folder, component)
+load_sim_results(folder, component, uni = FALSE)
 }
 \arguments{
 \item{folder}{Folder with saved objects from the simulation.}
 
 \item{component}{String of the model components to be loaded.}
+
+\item{uni}{Extract also the univariate part of the components. Defaults to
+FALSE.}
 }
 \description{
 This is an internal function. It takes the a folder containing simulation

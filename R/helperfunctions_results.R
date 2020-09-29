@@ -693,33 +693,41 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 #------------------------------------------------------------------------------#
 # Evaluate the model components per dimension in the simulation
 #------------------------------------------------------------------------------#
-sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
-
-  # Arguments
-  # folder      : Folder with saved objects from the simulation
-  # m_true_comp : True model components used for the simulation
-  # label_cov   : Labels for the covariates
+#' Evaluate the model components per dimension in the simulation
+#'
+#' This is an internal function. The function takes the folder containing the
+#' results of a simulation scenario and returns a data frame with relative
+#' MSE values for the separate model components and the separate dimensions.
+#'
+#' @inheritParams sim_eval_components
+#' @param uni_compare TRUE if the simulation scenario includes univariate model
+#'   estimates that should be also evaluated. Defaults to FALSE.
+sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
+                                 uni_compare = FALSE) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-  load(paste0(folder, "error_var_comp.Rdata"))
+  error_var <- load_sim_results(folder = folder, component = "error_var",
+                                uni = uni_compare)
 
   true_sig <- m_true_comp$error_var$modelsig2 /
     m_true_comp$error_var$modelweights
 
-  dat_err_u <- do.call(rbind, lapply(seq_along(error_var$mul),
-                                     function (x, true) {
-     sigma_hat <- unlist(error_var$uni[[x]])
-     data.frame(it = rep(x, times = length(sigma_hat)),
-                hat = sigma_hat,
-                no = factor(1, labels = c("sigma^2")),
-                true = true,
-                y = mapply(function (x, y) {
-                  rrMSE(theta_true = x, theta_estim = y)
-                }, true, sigma_hat),
-                comp = factor("sigma^2"),
-                dim = factor(c("ACO", "EPG")),
-                method = factor("uni"))
-  }, true = true_sig))
+  dat_err_u <- if (uni_compare) {
+    do.call(rbind, lapply(seq_along(error_var$mul),
+       function (x, true) {
+         sigma_hat <- unlist(error_var$uni[[x]])
+         data.frame(it = rep(x, times = length(sigma_hat)),
+                    hat = sigma_hat,
+                    no = factor(1, labels = c("sigma^2")),
+                    true = true,
+                    y = mapply(function (x, y) {
+                      rrMSE(theta_true = x, theta_estim = y)
+                    }, true, sigma_hat),
+                    comp = factor("sigma^2"),
+                    dim = factor(c("ACO", "EPG")),
+                    method = factor("uni"))
+       }, true = true_sig))
+  } else NULL
 
   dat_err_m <- do.call(rbind, lapply(seq_along(error_var$mul),
                                      function (x, true) {
@@ -737,11 +745,10 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
    }, true = true_sig))
 
   dat_err <- rbind(dat_err_m, dat_err_u)
-  # dat_err <- dat_err_u
-  # dat_err$mul <- dat_err_m$y
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-  load(paste0(folder, "ran_preds_comp.Rdata"))
+  ran_preds <- load_sim_results(folder = folder, component = "ran_preds",
+                                uni = uni_compare)
 
   dat_ran_m <- do.call(rbind, lapply(names(ran_preds$mul[[1]]), function (x) {
     do.call(rbind, lapply(seq_along(ran_preds$mul), function (y) {
@@ -757,32 +764,33 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
     }))
   }))
 
-  dat_ran_u <- do.call(rbind, lapply(names(ran_preds$mul[[1]]), function (x) {
-    do.call(rbind, lapply(seq_along(ran_preds$mul), function (y) {
-      randef <- lapply(ran_preds$uni[[y]], function (z) z[[x]])
-      rantru <- ran_preds$tru[[y]][[x]]
-      do.call(rbind, lapply(seq_along(c("ACO", "EPG")), function (z) {
-        data.frame(it = y,
-                   dim = c("ACO", "EPG")[z],
-                   no = factor(x),
-                   y = mrrMSE(fun_true = rantru[[z]],
-                              fun_estim = randef[[z]],
-                              flip = FALSE),
-                   comp = factor("Fit"),
-                   method = factor("uni"))
+  dat_ran_u <- if (uni_compare) {
+    do.call(rbind, lapply(names(ran_preds$mul[[1]]), function (x) {
+      do.call(rbind, lapply(seq_along(ran_preds$mul), function (y) {
+        randef <- lapply(ran_preds$uni[[y]], function (z) z[[x]])
+        rantru <- ran_preds$tru[[y]][[x]]
+        do.call(rbind, lapply(seq_along(c("ACO", "EPG")), function (z) {
+          data.frame(it = y,
+                     dim = c("ACO", "EPG")[z],
+                     no = factor(x),
+                     y = mrrMSE(fun_true = rantru[[z]],
+                                fun_estim = randef[[z]],
+                                flip = FALSE),
+                     comp = factor("Fit"),
+                     method = factor("uni"))
+        }))
       }))
     }))
-  }))
+  } else NULL
 
   dat_ran <- rbind(dat_ran_m, dat_ran_u)
-  # dat_ran <- dat_ran_u
-  # dat_ran$mul <- dat_ran_m$y
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Fitted values
-  load(paste0(folder, "fitted_cu_comp.Rdata"))
+  fitted_cu <- load_sim_results(folder = folder, component = "fitted_cu",
+                                uni = uni_compare)
 
-  fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = 10, J = 16,
+  fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = 9, J = 16,
                                  reps = 5)
 
   dat_fit_m <- do.call(rbind, lapply(seq_along(fitted_cu$mul), function (x) {
@@ -796,27 +804,30 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
                  method = factor("mul"))
   }))
 
-  dat_fit_u <- do.call(rbind, lapply(seq_along(fitted_cu$uni), function (x) {
-    do.call(rbind, lapply(seq_along(fitted_cu$uni[[1]]), function (y) {
-      data.frame(it = x,
-                 dim = c("ACO", "EPG")[y],
-                 no = factor("Y"),
-                 y = mrrMSE(fun_true = fit_true[[x]][[y]],
-                            fun_estim = fitted_cu$uni[[x]][[y]],
-                            flip = FALSE),
-                 comp = factor("Fit"),
-                 method = factor("uni"))
+  dat_fit_u <- if (uni_compare) {
+    do.call(rbind, lapply(seq_along(fitted_cu$uni), function (x) {
+      do.call(rbind, lapply(seq_along(fitted_cu$uni[[1]]), function (y) {
+        data.frame(it = x,
+                   dim = c("ACO", "EPG")[y],
+                   no = factor("Y"),
+                   y = mrrMSE(fun_true = fit_true[[x]][[y]],
+                              fun_estim = fitted_cu$uni[[x]][[y]],
+                              flip = FALSE),
+                   comp = factor("Fit"),
+                   method = factor("uni"))
+      }))
     }))
-  }))
+  } else NULL
+
 
   dat_fit <- rbind(dat_fit_m, dat_fit_u)
-  # dat_fit <- dat_fit_u
-  # dat_fit$mul <- dat_fit_m$y
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariance operator
-  load(paste0(folder, "eigenvals_comp.Rdata"))
-  load(paste0(folder, "eigenfcts_comp.Rdata"))
+  eigenvals <- load_sim_results(folder = folder, component = "eigenvals",
+                                uni = uni_compare)
+  eigenfcts <- load_sim_results(folder = folder, component = "eigenfcts",
+                                uni = uni_compare)
 
 
   auto_cross <- list(c(1,1), c(1,2), c(2,2))
@@ -845,7 +856,6 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
                    dim = c("ACO", "cross","EPG")[y],
                    no = factor(paste0("C[",
                                       ifelse(y %% 2 == 0, "cross", "auto"),
-                                      #paste(auto_cross[[y]], collapse = ""),
                                       "]^", x)),
                    y = mrrMSE(fun_true = true_covs[[x]][[y]],
                               fun_estim = estim_cov,
@@ -856,43 +866,43 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
     }))
   }))
 
-  dat_cop_u <- do.call(rbind, lapply(names(true_covs), function (x) {
-    do.call(rbind, lapply(seq_along(auto_cross), function (y) {
-      do.call(rbind, lapply(seq_along(eigenvals$uni), function (z) {
+  dat_cop_u <- if (uni_compare) {
+    do.call(rbind, lapply(names(true_covs), function (x) {
+      do.call(rbind, lapply(seq_along(auto_cross), function (y) {
+        do.call(rbind, lapply(seq_along(eigenvals$uni), function (z) {
 
-        vals <- lapply(eigenvals$uni[[z]], "[[", x)
-        fcts <- lapply(eigenfcts$uni[[z]], "[[", x)
+          vals <- lapply(eigenvals$uni[[z]], "[[", x)
+          fcts <- lapply(eigenfcts$uni[[z]], "[[", x)
 
-        estim_cov <- funData(argvals = list(seq(0,1,length.out = 100),
-                                            seq(0,1,length.out = 100)),
-                             X = array(covSurv(vals = vals,
-                                               fcts = fcts,
-                                               dim1 = auto_cross[[y]][1],
-                                               dim2 = auto_cross[[y]][2],
-                                               multi = FALSE),
-                                       dim = c(1,100,100)))
-        data.frame(it = z,
-                   dim = c("ACO", "cross", "EPG")[y],
-                   no = factor(paste0("C[",
-                                      ifelse(y %% 2 == 0, "cross", "auto"),
-                                      #paste(auto_cross[[y]], collapse = ""),
-                                      "]^", x)),
-                   y = mrrMSE(fun_true = true_covs[[x]][[y]],
-                              fun_estim = estim_cov,
-                              flip = FALSE),
-                   comp = "Covariance",
-                   method = "uni")
+          estim_cov <- funData(argvals = list(seq(0,1,length.out = 100),
+                                              seq(0,1,length.out = 100)),
+                               X = array(covSurv(vals = vals,
+                                                 fcts = fcts,
+                                                 dim1 = auto_cross[[y]][1],
+                                                 dim2 = auto_cross[[y]][2],
+                                                 multi = FALSE),
+                                         dim = c(1,100,100)))
+          data.frame(it = z,
+                     dim = c("ACO", "cross", "EPG")[y],
+                     no = factor(paste0("C[",
+                                        ifelse(y %% 2 == 0, "cross", "auto"),
+                                        "]^", x)),
+                     y = mrrMSE(fun_true = true_covs[[x]][[y]],
+                                fun_estim = estim_cov,
+                                flip = FALSE),
+                     comp = "Covariance",
+                     method = "uni")
+        }))
       }))
     }))
-  }))
+  } else NULL
 
   dat_cop <- rbind(dat_cop_m, dat_cop_u)
-  # dat_cop <- dat_cop_u
-  # dat_cop$mul <- dat_cop_m$y
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariate effects
-  load(paste0(folder, "cov_preds_comp.Rdata"))
+  cov_preds <- load_sim_results(folder = folder, component = "cov_preds",
+                                uni = uni_compare)
   names <- label_cov
 
   dat_cov_m <- do.call(rbind, lapply(seq_along(cov_preds$mul), function (x) {
@@ -908,33 +918,34 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov) {
     }))
   }))
 
-  dat_cov_u <- do.call(rbind, lapply(seq_along(cov_preds$mul), function (x) {
-    do.call(rbind, lapply(seq_along(cov_preds$uni[[x]]), function (y) {
-      do.call(rbind, lapply(seq_along(cov_preds$uni[[x]][[y]]$fit),
-                            function (z) {
-        aha <- names(cov_preds$uni[[x]][[y]]$fit)
-        aha <- sub("famm_cb", "s(t):", aha)
-        aha <- gsub("_", ".", aha)
-        names(cov_preds$uni[[x]][[y]]$fit) <- sub(".mean|.covariate", "", aha)
+  dat_cov_u <- if (uni_compare) {
+    do.call(rbind, lapply(seq_along(cov_preds$mul), function (x) {
+      do.call(rbind, lapply(seq_along(cov_preds$uni[[x]]), function (y) {
+        do.call(rbind, lapply(seq_along(cov_preds$uni[[x]][[y]]$fit),
+          function (z) {
+            aha <- names(cov_preds$uni[[x]][[y]]$fit)
+            aha <- sub("famm_cb", "s(t):", aha)
+            aha <- gsub("_", ".", aha)
+            names(cov_preds$uni[[x]][[y]]$fit) <- sub(".mean|.covariate", "",
+                                                      aha)
 
-        u <- names(cov_preds$uni[[x]][[y]]$fit)[[z]]
-        v <- which(names(m_true_comp$cov_preds$fit) == u)
+            u <- names(cov_preds$uni[[x]][[y]]$fit)[[z]]
+            v <- which(names(m_true_comp$cov_preds$fit) == u)
 
-        data.frame(it = x,
-                   no = factor(names[v]),
-                   dim = c("ACO", "EPG")[y],
-                   y = mrrMSE(fun_true = m_true_comp$cov_preds$fit[[u]][[y]],
-                              fun_estim = cov_preds$uni[[x]][[y]]$fit[[z]]),
-                   comp = factor("Effectfunctions"),
-                   method = factor("uni"))
+            data.frame(it = x,
+                       no = factor(names[v]),
+                       dim = c("ACO", "EPG")[y],
+                       y = mrrMSE(fun_true =
+                                    m_true_comp$cov_preds$fit[[u]][[y]],
+                                  fun_estim = cov_preds$uni[[x]][[y]]$fit[[z]]),
+                       comp = factor("Effectfunctions"),
+                       method = factor("uni"))
+          }))
       }))
     }))
-  }))
+  } else NULL
 
   dat_cov <- rbind(dat_cov_m, dat_cov_u)
-  # dat_cov <- dat_cov_u
-  # dat_cov$mul <- dat_cov_m$y
-
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   comb <- c("it", "no", "y", "comp", "dim", "method")
@@ -1558,7 +1569,9 @@ my_corr <- function (data, method = c("pairwise", "pearson"), cor_matrix = NULL,
 #'
 #' @param folder Folder with saved objects from the simulation.
 #' @param component String of the model components to be loaded.
-load_sim_results <- function (folder, component) {
+#' @param uni Extract also the univariate part of the components. Defaults to
+#'   FALSE.
+load_sim_results <- function (folder, component, uni = FALSE) {
 
   # load all elements of the folder that have the component in its name
   files <- list.files(path = folder)
@@ -1573,14 +1586,16 @@ load_sim_results <- function (folder, component) {
     "eigenfcts" = ,
     "eigenvals" = ,
     "error_var" = {
-      list("mul" = do.call(c, lapply(out, "[[", "mul")))
+      list("mul" = do.call(c, lapply(out, "[[", "mul")),
+           "uni" = if (!uni) NULL else do.call(c, lapply(out, "[[", "uni")))
       },
     "eigscores" = ,
     "fitted_cu" = ,
     "ran_preds" = {
       list("mul" = do.call(c, lapply(out, "[[", "mul")),
+           "uni" = if (!uni) NULL else do.call(c, lapply(out, "[[", "uni")),
            "tru" = do.call(c, lapply(out, "[[", "tru")))
     })
-  out
+  out[lengths(out) != 0]
 
 }
