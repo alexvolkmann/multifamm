@@ -22,15 +22,28 @@
 
 
 #------------------------------------------------------------------------------#
-# Root Relative Mean Squared Error for Scalar Estimates
+# Root (Relative) Mean Squared Error for Scalar Estimates
 #------------------------------------------------------------------------------#
-rrMSE <- function (theta_true, theta_estim) {
+#' Root (Relative) Mean Squared Error for Scalar Estimates
+#'
+#' This is an internal function. It calculates the root (relative) mean squared
+#' error for scalar quantities.
+#'
+#' @param theta_true True component (scalar).
+#' @param theta_estim Estimated component (scalar).
+#' @param relative FALSE if the absolute MSE is to be computed. Defaults to the
+#'   relative MSE (TRUE).
+rrMSE <- function (theta_true, theta_estim, relative = TRUE) {
 
   # Arguments
   # theta_true  : True component
   # theta_estim : Estimated component
 
-  sqrt(mean((theta_true - theta_estim)^2) / mean(theta_true^2))
+  if (relative) {
+    sqrt(mean((theta_true - theta_estim)^2) / mean(theta_true^2))
+  } else {
+    sqrt(mean((theta_true - theta_estim)^2))
+  }
 
 }
 #------------------------------------------------------------------------------#
@@ -38,10 +51,10 @@ rrMSE <- function (theta_true, theta_estim) {
 #------------------------------------------------------------------------------#
 # Multivariate Root Relative Mean Squared Error for Functions
 #------------------------------------------------------------------------------#
-#' Multivariate Root Relative Mean Squared Error for Functions
+#' Multivariate Root (Relative) Mean Squared Error for Functions
 #'
-#' This is an internal function. Calculate the multivariate root relative mean
-#' squared error for funcitons. For eigenfunctions, which are only defined up to
+#' This is an internal function. Calculate the multivariate root (relative) mean
+#' squared error for functions. For eigenfunctions, which are only defined up to
 #' a sign change, there is the option to flip the functions first if the flipped
 #' functions seems to be closer to the true function
 #'
@@ -49,36 +62,52 @@ rrMSE <- function (theta_true, theta_estim) {
 #' @param fun_estim MultiFunData object containing the estimated functions.
 #' @param flip Are the estimated functions to be flipped before calculating the
 #'  mrrMSE? Defaults to FALSE.
-mrrMSE <- function (fun_true, fun_estim, flip = FALSE) {
+#' @inheritParams rrMSE
+mrrMSE <- function (fun_true, fun_estim, flip = FALSE, relative = TRUE) {
 
   if (flip == TRUE) {
     fun_estim <- funData::flipFuns(refObject = fun_true, newObject = fun_estim)
   }
 
-  sqrt(mean(funData::norm(fun_true - fun_estim)) /
-         mean(funData::norm(fun_true)))
+  if (relative) {
+    sqrt(mean(funData::norm(fun_true - fun_estim)) /
+           mean(funData::norm(fun_true)))
+  } else {
+    sqrt(mean(funData::norm(fun_true - fun_estim)))
+  }
 
 }
 #------------------------------------------------------------------------------#
 
 #------------------------------------------------------------------------------#
-# Univariate Root Relative Mean Squared Error for Functions
+# Univariate Root (Relative) Mean Squared Error for Functions
 #------------------------------------------------------------------------------#
-urrMSE <- function (fun_true, fun_estim, flip = FALSE) {
-
-  # Arguments
-  # fun_true  : True function
-  # fun_estim : Estimated function
-  # flip      : Are estimated functions to be flipped?
+#' Univariate Root (Relative) Mean Squared Error for Functions
+#'
+#' This is an internal function. Calculate the univariate root (relative) mean
+#' squared error for functions. For eigenfunctions, which are only defined up to
+#' a sign change, there is the option to flip the functions first if the flipped
+#' functions seems to be closer to the true function
+#'
+#' @inheritParams mrrMSE
+urrMSE <- function (fun_true, fun_estim, flip = FALSE, relative = TRUE) {
 
   if (flip == TRUE) {
     fun_estim <- flipFuns(refObject = fun_true, newObject = fun_estim)
   }
 
-  lapply(seq_along(fun_true@.Data), function (x) {
-    sqrt(mean(norm(fun_true@.Data[[x]] - fun_estim@.Data[[x]])) /
-           mean(norm(fun_true@.Data[[x]])))
-  })
+  if (relative) {
+    lapply(seq_along(fun_true@.Data), function (x) {
+      sqrt(mean(norm(fun_true@.Data[[x]] - fun_estim@.Data[[x]])) /
+             mean(norm(fun_true@.Data[[x]])))
+    })
+
+  } else {
+    lapply(seq_along(fun_true@.Data), function (x) {
+      sqrt(mean(norm(fun_true@.Data[[x]] - fun_estim@.Data[[x]])))
+    })
+
+  }
 
 }
 #------------------------------------------------------------------------------#
@@ -487,12 +516,15 @@ funData2DataFrame <- function(fundata) {
 #' @param folder Folder with saved objects from the simulation.
 #' @param m_true_comp True model components used for the simulation.
 #' @param label_cov Vector of labels for the covariates.
+#' @param relative Is the relative error measure to be used or the absolute?
+#'   Defaults to TRUE.
 #' @param I Number of levels for component B. Defaults to 9.
 #' @param J Number of levels for component C. Defaults to 16.
 #' @param reps Number of repetitions of the levels of B and C. Defaults to 5.
 #' @param nested TRUE if the model component C is nested. Defaults to FALSE.
 sim_eval_components <- function (folder, m_true_comp, label_cov,
-                                 I = 9, J = 16, reps = 5, nested = FALSE) {
+                                 relative = TRUE, I = 9, J = 16, reps = 5,
+                                 nested = FALSE) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   error_var <- load_sim_results(folder = folder, component = "error_var")
@@ -514,7 +546,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                                       "]^2"))}),
                true = true,
                y = mapply(function (x, y) {
-                 rrMSE(theta_true = x, theta_estim = y)
+                 rrMSE(theta_true = x, theta_estim = y, relative = relative)
                }, true, sigma_hat),
                comp = factor("sigma^2"))
 
@@ -533,7 +565,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                                              "]^", x)),
                  true = true,
                  y = mapply(function (u, v) {
-                   rrMSE(theta_true = u, theta_estim = v)
+                   rrMSE(theta_true = u, theta_estim = v, relative = relative)
                  }, true, vals),
                  comp = "Eigenvalues")
     }, true = m_true_comp$eigenvals[[x]]))
@@ -563,7 +595,8 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                              labels = paste0("rho[",seq_len(ncol(scores)),
                                              "]^", x)),
                  y = sapply(1:ncol(scores), function (z) {
-                   rrMSE(theta_true = true[, z], theta_estim = scores[, z])
+                   rrMSE(theta_true = true[, z], theta_estim = scores[, z],
+                         relative = relative)
                  }),
                  comp = "Scores")
     }))
@@ -584,7 +617,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                      fun_true = funData::extractObs(m_true_comp$eigenfcts[[x]],
                                                     obs = z),
                      fun_estim = funData::extractObs(fcts, obs = z),
-                     flip = TRUE)
+                     flip = TRUE, relative = relative)
                  }),
                  comp = "Eigenfunctions")
     }))
@@ -624,7 +657,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                                       "]^", x)),
                    y = mrrMSE(fun_true = true_covs[[x]][[y]],
                               fun_estim = estim_cov,
-                              flip = FALSE),
+                              flip = FALSE, relative = relative),
                    comp = "Covariance")
       }))
     }))
@@ -641,7 +674,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
       data.frame(it = y,
                  no = factor(1, labels = x),
                  y = mrrMSE(fun_true = rantru, fun_estim = randef,
-                            flip = FALSE),
+                            flip = FALSE, relative = relative),
                  comp = "Fit")
     }))
   }))
@@ -658,7 +691,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                no = factor(1, label = "Y"),
                y = mrrMSE(fun_true = fit_true[[x]],
                           fun_estim = fitted_cu$mul[[x]],
-                          flip = FALSE),
+                          flip = FALSE, relative = relative),
                comp = "Fit")
   }))
 
@@ -674,7 +707,8 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                       y = sapply(seq_along(cov_preds$mul[[x]]$fit),
                                  function (y) {
                         mrrMSE(fun_true = m_true_comp$cov_preds$fit[[y]],
-                               fun_estim = cov_preds$mul[[x]]$fit[[y]])
+                               fun_estim = cov_preds$mul[[x]]$fit[[y]],
+                               relative = relative)
                       }),
                       comp = "Effectfunctions")
   }))
@@ -703,7 +737,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 #' @param uni_compare TRUE if the simulation scenario includes univariate model
 #'   estimates that should be also evaluated. Defaults to FALSE.
 sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
-                                 uni_compare = FALSE) {
+                                 relative = TRUE, uni_compare = FALSE) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   error_var <- load_sim_results(folder = folder, component = "error_var",
@@ -721,7 +755,8 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                     no = factor(1, labels = c("sigma^2")),
                     true = true,
                     y = mapply(function (x, y) {
-                      rrMSE(theta_true = x, theta_estim = y)
+                      rrMSE(theta_true = x, theta_estim = y,
+                            relative = relative)
                     }, true, sigma_hat),
                     comp = factor("sigma^2"),
                     dim = factor(c("ACO", "EPG")),
@@ -737,7 +772,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                 no = factor(1, labels = c("sigma^2")),
                 true = true,
                 y = mapply(function (x, y) {
-                  rrMSE(theta_true = x, theta_estim = y)
+                  rrMSE(theta_true = x, theta_estim = y, relative = relative)
                 }, true, sigma_hat),
                 comp = factor("sigma^2"),
                 dim = factor(c("ACO", "EPG")),
@@ -757,7 +792,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
       data.frame(it = rep(y, times = length(randef)),
                  dim = factor(1:length(randef), labels = c("ACO", "EPG")),
                  y = unlist(urrMSE(fun_true = rantru, fun_estim = randef,
-                                   flip = FALSE)),
+                                   flip = FALSE, relative = relative)),
                  no = factor(x),
                  comp = factor("Fit"),
                  method = factor("mul"))
@@ -775,7 +810,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                      no = factor(x),
                      y = mrrMSE(fun_true = rantru[[z]],
                                 fun_estim = randef[[z]],
-                                flip = FALSE),
+                                flip = FALSE, relative = relative),
                      comp = factor("Fit"),
                      method = factor("uni"))
         }))
@@ -799,7 +834,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                  no = factor("Y"),
                  y = unlist(urrMSE(fun_true = fit_true[[x]],
                                    fun_estim = fitted_cu$mul[[x]],
-                                   flip = FALSE)),
+                                   flip = FALSE, relative = relative)),
                  comp = "Fit",
                  method = factor("mul"))
   }))
@@ -812,7 +847,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                    no = factor("Y"),
                    y = mrrMSE(fun_true = fit_true[[x]][[y]],
                               fun_estim = fitted_cu$uni[[x]][[y]],
-                              flip = FALSE),
+                              flip = FALSE, relative = relative),
                    comp = factor("Fit"),
                    method = factor("uni"))
       }))
@@ -859,7 +894,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                                       "]^", x)),
                    y = mrrMSE(fun_true = true_covs[[x]][[y]],
                               fun_estim = estim_cov,
-                              flip = FALSE),
+                              flip = FALSE, relative = relative),
                    comp = "Covariance",
                    method = "mul")
       }))
@@ -889,7 +924,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                                         "]^", x)),
                      y = mrrMSE(fun_true = true_covs[[x]][[y]],
                                 fun_estim = estim_cov,
-                                flip = FALSE),
+                                flip = FALSE, relative = relative),
                      comp = "Covariance",
                      method = "uni")
         }))
@@ -912,7 +947,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                  dim = c("ACO", "EPG"),
                  y = unlist(urrMSE(fun_true = m_true_comp$cov_preds$fit[[y]],
                                    fun_estim = cov_preds$mul[[x]]$fit[[y]],
-                                   flip = FALSE)),
+                                   flip = FALSE, relative = relative)),
                  comp = factor("Effectfunctions"),
                  method = factor("mul"))
     }))
@@ -937,7 +972,8 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                        dim = c("ACO", "EPG")[y],
                        y = mrrMSE(fun_true =
                                     m_true_comp$cov_preds$fit[[u]][[y]],
-                                  fun_estim = cov_preds$uni[[x]][[y]]$fit[[z]]),
+                                  fun_estim = cov_preds$uni[[x]][[y]]$fit[[z]],
+                                  relative = relative),
                        comp = factor("Effectfunctions"),
                        method = factor("uni"))
           }))
@@ -1597,5 +1633,51 @@ load_sim_results <- function (folder, component, uni = FALSE) {
            "tru" = do.call(c, lapply(out, "[[", "tru")))
     })
   out[lengths(out) != 0]
+
+}
+#------------------------------------------------------------------------------#
+
+#------------------------------------------------------------------------------#
+# Return Number of Selected FPCS per Component and Iteration
+#------------------------------------------------------------------------------#
+#' Return Number of Selected FPCS per Component and Iteration
+#'
+#' This is an internal function. It takes the a folder containing simulation
+#' results and returns a data set which contains the number of selected FPCS
+#' per component.
+#'
+#' @inheritParams load_sim_results
+return_number_fpcs <- function (folder, uni = FALSE) {
+
+  # Use the eigenvalues to count the number of selected components
+  eigenvals <- load_sim_results(folder = folder, component = "eigenvals",
+                                uni = uni)
+
+  # Extract the number for the multivariate model
+  dat_m <- do.call(rbind, lapply(seq_along(eigenvals$mul), function (it) {
+    data.frame(it = it,
+               no = factor(names(eigenvals$mul[[it]])),
+               method = factor("mul"),
+               y = sapply(eigenvals$mul[[it]], length))
+  }))
+
+  # It the simulation scenario contains univariate models, also extract their
+  # number
+  if (uni) {
+    dat_u <-  do.call(rbind, lapply(seq_along(eigenvals$uni), function (it) {
+      do.call(rbind, lapply(seq_along(eigenvals$uni[[it]]), function (dim) {
+        data.frame(it = it,
+                   no = factor(names(eigenvals$uni[[it]][[dim]])),
+                   method = factor("uni"),
+                   y = sapply(eigenvals$uni[[it]][[dim]], length),
+                   dim = factor(names(eigenvals$uni[[it]])[dim]))
+      }))
+    }))
+    dat_m$dim <- factor("mul")
+  } else {
+    dat_u <- NULL
+  }
+
+  rbind(dat_m, dat_u)
 
 }

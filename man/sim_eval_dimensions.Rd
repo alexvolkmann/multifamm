@@ -4,7 +4,8 @@
 \alias{sim_eval_dimensions}
 \title{Evaluate the model components per dimension in the simulation}
 \usage{
-sim_eval_dimensions(folder, m_true_comp, label_cov, uni_compare = FALSE)
+sim_eval_dimensions(folder, m_true_comp, label_cov, relative = TRUE,
+  uni_compare = FALSE)
 }
 \arguments{
 \item{folder}{Folder with saved objects from the simulation.}
@@ -12,6 +13,9 @@ sim_eval_dimensions(folder, m_true_comp, label_cov, uni_compare = FALSE)
 \item{m_true_comp}{True model components used for the simulation.}
 
 \item{label_cov}{Vector of labels for the covariates.}
+
+\item{relative}{Is the relative error measure to be used or the absolute?
+Defaults to TRUE.}
 
 \item{uni_compare}{TRUE if the simulation scenario includes univariate model
 estimates that should be also evaluated. Defaults to FALSE.}

@@ -4,8 +4,8 @@
 \alias{sim_eval_components}
 \title{Evaluate the model components in the simulation}
 \usage{
-sim_eval_components(folder, m_true_comp, label_cov, I = 9, J = 16,
-  reps = 5, nested = FALSE)
+sim_eval_components(folder, m_true_comp, label_cov, relative = TRUE, I = 9,
+  J = 16, reps = 5, nested = FALSE)
 }
 \arguments{
 \item{folder}{Folder with saved objects from the simulation.}
@@ -13,6 +13,9 @@ sim_eval_components(folder, m_true_comp, label_cov, I = 9, J = 16,
 \item{m_true_comp}{True model components used for the simulation.}
 
 \item{label_cov}{Vector of labels for the covariates.}
+
+\item{relative}{Is the relative error measure to be used or the absolute?
+Defaults to TRUE.}
 
 \item{I}{Number of levels for component B. Defaults to 9.}
 
