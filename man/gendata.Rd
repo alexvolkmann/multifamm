@@ -11,7 +11,8 @@ gendata(I = 10, J = 10, nested = FALSE, num_dim = 2, lamB, lamC, lamE,
   maxsize = 20, min_grid = 0, max_grid = 1, grid_eval = 100,
   min_visit = 3, max_visit = 3, use_RI = FALSE, covariate = TRUE,
   num_cov = 4, interaction = FALSE, which_inter = matrix(NA),
-  model = NULL, center_scores = FALSE, decor_scores = FALSE)
+  model = NULL, center_scores = FALSE, decor_scores = FALSE,
+  nested_center = FALSE)
 }
 \arguments{
 \item{I}{Number of levels for first grouping variable (individuals).}
@@ -103,7 +104,10 @@ NULL if mu is specified.}
 
 \item{center_scores}{TRUE: FPC weights are centered. Defaults to FALSE.}
 
-\item{decor_scores}{TRUE: FPC weights are decorrelated Defaults to FALSE.}
+\item{decor_scores}{TRUE: FPC weights are decorrelated. Defaults to FALSE.}
+
+\item{nested_center}{TRUE: FPC weights of the nested effect are centered
+around zero for each subject. Defaults to FALSE.}
 }
 \description{
 This is an internal function. It creates a new data set based on already

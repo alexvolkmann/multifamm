@@ -4,7 +4,7 @@
 \alias{return_number_fpcs}
 \title{Return Number of Selected FPCS per Component and Iteration}
 \usage{
-return_number_fpcs(folder, uni)
+return_number_fpcs(folder, uni = FALSE)
 }
 \arguments{
 \item{folder}{Folder with saved objects from the simulation.}

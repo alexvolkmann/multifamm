@@ -63,7 +63,9 @@
 #' @param model GAM model from which to extract the covariate functions. Can be
 #'   NULL if mu is specified.
 #' @param center_scores TRUE: FPC weights are centered. Defaults to FALSE.
-#' @param decor_scores TRUE: FPC weights are decorrelated Defaults to FALSE.
+#' @param decor_scores TRUE: FPC weights are decorrelated. Defaults to FALSE.
+#' @param nested_center TRUE: FPC weights of the nested effect are centered
+#'   around zero for each subject. Defaults to FALSE.
 gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
                     lamB, lamC, lamE, normal = TRUE,
                     sigmasq = list(0.05, 4), dim_indep = TRUE,
@@ -77,7 +79,8 @@ gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
                     use_RI = FALSE, covariate = TRUE, num_cov = 4,
                     interaction = FALSE, which_inter = matrix(NA),
                     model = NULL,
-                    center_scores = FALSE, decor_scores = FALSE){
+                    center_scores = FALSE, decor_scores = FALSE,
+                    nested_center = FALSE){
 
   if(any(!require(data.table) | !require(funData))){
     stop("Packages data.table and funData have to be installed.")
@@ -417,8 +420,17 @@ gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
 
     if (!use_RI) {
       if (N_C > 0) {
-        for (k in 1:N_C) {
-          xiC[, k] <- xiC[, k] - mean(xiC[, k])
+        if (!nested_center) {
+          for (k in 1:N_C) {
+            xiC[, k] <- xiC[, k] - mean(xiC[, k])
+          }
+        } else {
+          if (J != 2) {
+            warning("Nested centering only implemented for J=2.")
+          }
+          for (k in 1:N_C) {
+            xiC[seq_len(I)*J, k] <- -xiC[seq_len(I)*J-1, k]
+          }
         }
       }
     }
