@@ -4,13 +4,18 @@
 \alias{create_coverage_array}
 \title{Create the Coverage Array of the Simulation}
 \usage{
-create_coverage_array(sim_curves, gen_curves, effect_index, m_fac = 1.96)
+create_coverage_array(sim_curves, gen_curves, effect_index, uni = NULL,
+  m_fac = 1.96)
 }
 \arguments{
 \item{sim_curves}{The large list of simulation results. Use object$mul.}
 
 \item{gen_curves}{The original data generating curve as part of the output of
 multifamm:::extract_components(), so use output$cov_preds.}
+
+\item{uni}{Vector giving the associated order of the data generating effects
+when evaluating univariate models (object$uni). Is NULL for evaluation of
+multivariate models.}
 
 \item{m_fac}{Multiplication factor used to create the upper and lower
 credibility bounds. Defaults to 1.96 (ca. 95\%).}

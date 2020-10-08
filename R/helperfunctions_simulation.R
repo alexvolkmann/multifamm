@@ -966,10 +966,32 @@ prepare_gam_predict <- function (data, num_cov, interaction, which_inter,
 #'   gen_curves and sim_curves effect lists. If the intercept is to be
 #'   evaluated, this can be specified as 1 or 2 (both scalar and functional
 #'   intercept are sumed up).
+#' @param uni Vector giving the associated order of the data generating effects
+#'   when evaluating univariate models (object$uni). Is NULL for evaluation of
+#'   multivariate models.
 #' @param m_fac Multiplication factor used to create the upper and lower
 #'   credibility bounds. Defaults to 1.96 (ca. 95\%).
 create_coverage_array <- function (sim_curves, gen_curves, effect_index,
-                                   m_fac = 1.96) {
+                                   uni = NULL, m_fac = 1.96) {
+
+  # Restructure the results if the coverage of univariate models is to be
+  # evaluated so that the results are multiFunData objects and the rest of the
+  # code can be used
+  if (!is.null(uni)) {
+    sim_curves <- lapply(sim_curves, function (it) {
+      out_type <- lapply(names(it[[1]]), function (type) {
+        out_effect <- lapply(names(it[[1]][[type]]), function (effect) {
+          multiFunData(lapply(it, function (dim) {
+            dim[[type]][[effect]]
+          }))
+        })
+        names(out_effect) <- names(it[[1]][[type]])
+        out_effect[uni]
+      })
+      names(out_type) <- names(it[[1]])
+      out_type
+    })
+  }
 
   # Create upper and lower bounds of each simulation run
   # Extract original curve
