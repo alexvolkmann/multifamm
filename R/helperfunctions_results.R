@@ -743,6 +743,8 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                                  relative = TRUE, uni_compare = FALSE) {
 
+  dim_names <- paste0("dim", seq_along(m_true_comp$fitted_curves))
+
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   error_var <- load_sim_results(folder = folder, component = "error_var",
                                 uni = uni_compare)
@@ -763,7 +765,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                             relative = relative)
                     }, true, sigma_hat),
                     comp = factor("sigma^2"),
-                    dim = factor(c("ACO", "EPG")),
+                    dim = if (length(true_sig) == 1) "cross" else dim_names,
                     method = factor("uni"))
        }, true = true_sig))
   } else NULL
@@ -779,7 +781,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                   rrMSE(theta_true = x, theta_estim = y, relative = relative)
                 }, true, sigma_hat),
                 comp = factor("sigma^2"),
-                dim = factor(c("ACO", "EPG")),
+                dim = if (length(true_sig) == 1) "cross" else dim_names,
                 method = factor("mul"))
    }, true = true_sig))
 
@@ -794,7 +796,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
       randef <- ran_preds$mul[[y]][[x]]
       rantru <- ran_preds$tru[[y]][[x]]
       data.frame(it = rep(y, times = length(randef)),
-                 dim = factor(1:length(randef), labels = c("ACO", "EPG")),
+                 dim = dim_names,
                  y = unlist(urrMSE(fun_true = rantru, fun_estim = randef,
                                    flip = FALSE, relative = relative)),
                  no = factor(x),
@@ -808,9 +810,9 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
       do.call(rbind, lapply(seq_along(ran_preds$mul), function (y) {
         randef <- lapply(ran_preds$uni[[y]], function (z) z[[x]])
         rantru <- ran_preds$tru[[y]][[x]]
-        do.call(rbind, lapply(seq_along(c("ACO", "EPG")), function (z) {
+        do.call(rbind, lapply(seq_along(dim_names), function (z) {
           data.frame(it = y,
-                     dim = c("ACO", "EPG")[z],
+                     dim = dim_names[z],
                      no = factor(x),
                      y = mrrMSE(fun_true = rantru[[z]],
                                 fun_estim = randef[[z]],
@@ -834,7 +836,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
 
   dat_fit_m <- do.call(rbind, lapply(seq_along(fitted_cu$mul), function (x) {
       data.frame(it = x,
-                 dim = c("ACO", "EPG"),
+                 dim = dim_names,
                  no = factor("Y"),
                  y = unlist(urrMSE(fun_true = fit_true[[x]],
                                    fun_estim = fitted_cu$mul[[x]],
@@ -847,7 +849,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
     do.call(rbind, lapply(seq_along(fitted_cu$uni), function (x) {
       do.call(rbind, lapply(seq_along(fitted_cu$uni[[1]]), function (y) {
         data.frame(it = x,
-                   dim = c("ACO", "EPG")[y],
+                   dim = dim_names[y],
                    no = factor("Y"),
                    y = mrrMSE(fun_true = fit_true[[x]][[y]],
                               fun_estim = fitted_cu$uni[[x]][[y]],
@@ -869,14 +871,18 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
                                 uni = uni_compare)
 
 
-  auto_cross <- list(c(1,1), c(1,2), c(2,2))
+  auto_cross <- c(lapply(1:length(m_true_comp$fitted_curves),
+                         function (x) c(x, x)),
+                  combn(1:length(m_true_comp$fitted_curves),
+                        m = 2, simplify = FALSE))
   true_covs <- lapply(names(m_true_comp$eigenvals), function (x) {
     lapply(auto_cross, function (y) {
-      funData(argvals = list(seq(0,1,length.out = 100),
-                             seq(0,1,length.out = 100)),
-              X = array(covSurv(vals = m_true_comp$eigenvals[[x]],
-                                fcts = m_true_comp$eigenfcts[[x]],
-                                dim1 = y[1], dim2 = y[2]), dim = c(1,100,100)))
+      funData::funData(argvals = list(seq(0,1,length.out = 100),
+                                      seq(0,1,length.out = 100)),
+                       X = array(covSurv(vals = m_true_comp$eigenvals[[x]],
+                                         fcts = m_true_comp$eigenfcts[[x]],
+                                         dim1 = y[1], dim2 = y[2]),
+                                 dim = c(1,100,100)))
     })
   })
   names(true_covs) <- names(m_true_comp$eigenvals)
@@ -884,17 +890,19 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
   dat_cop_m <- do.call(rbind, lapply(names(true_covs), function (x) {
     do.call(rbind, lapply(seq_along(auto_cross), function (y) {
       do.call(rbind, lapply(seq_along(eigenvals$mul), function (z) {
-        estim_cov <- funData(argvals = list(seq(0,1,length.out = 100),
-                                            seq(0,1,length.out = 100)),
-                             X = array(covSurv(vals = eigenvals$mul[[z]][[x]],
-                                               fcts = eigenfcts$mul[[z]][[x]],
-                                               dim1 = auto_cross[[y]][1],
-                                               dim2 = auto_cross[[y]][2]),
-                                       dim = c(1,100,100)))
+        estim_cov <- funData::funData(argvals = list(seq(0,1,length.out = 100),
+                                                     seq(0,1,length.out = 100)),
+                             X = array(covSurv(
+                               vals = eigenvals$mul[[z]][[x]],
+                               fcts = eigenfcts$mul[[z]][[x]],
+                               dim1 = auto_cross[[y]][1],
+                               dim2 = auto_cross[[y]][2]),
+                               dim = c(1,100,100)))
         data.frame(it = z,
-                   dim = c("ACO", "cross","EPG")[y],
-                   no = factor(paste0("C[",
-                                      ifelse(y %% 2 == 0, "cross", "auto"),
+                   dim = c(dim_names,
+                           rep("cross", choose(length(dim_names), 2)))[y],
+                   no = factor(paste0("K[",
+                                      paste(auto_cross[[y]], collapse = ""),
                                       "]^", x)),
                    y = mrrMSE(fun_true = true_covs[[x]][[y]],
                               fun_estim = estim_cov,
@@ -913,18 +921,20 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
           vals <- lapply(eigenvals$uni[[z]], "[[", x)
           fcts <- lapply(eigenfcts$uni[[z]], "[[", x)
 
-          estim_cov <- funData(argvals = list(seq(0,1,length.out = 100),
-                                              seq(0,1,length.out = 100)),
-                               X = array(covSurv(vals = vals,
-                                                 fcts = fcts,
-                                                 dim1 = auto_cross[[y]][1],
-                                                 dim2 = auto_cross[[y]][2],
-                                                 multi = FALSE),
-                                         dim = c(1,100,100)))
+          estim_cov <- funData::funData(argvals =
+                                          list(seq(0,1,length.out = 100),
+                                               seq(0,1,length.out = 100)),
+                                        X = array(covSurv(vals = vals,
+                                              fcts = fcts,
+                                              dim1 = auto_cross[[y]][1],
+                                              dim2 = auto_cross[[y]][2],
+                                              multi = FALSE),
+                                              dim = c(1,100,100)))
           data.frame(it = z,
-                     dim = c("ACO", "cross", "EPG")[y],
-                     no = factor(paste0("C[",
-                                        ifelse(y %% 2 == 0, "cross", "auto"),
+                     dim = c(dim_names,
+                             rep("cross", choose(length(dim_names), 2)))[y],
+                     no = factor(paste0("K[",
+                                        paste(auto_cross[[y]], collapse = ""),
                                         "]^", x)),
                      y = mrrMSE(fun_true = true_covs[[x]][[y]],
                                 fun_estim = estim_cov,
@@ -948,7 +958,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
     do.call(rbind, lapply(seq_along(cov_preds$mul[[x]]$fit), function (y) {
       data.frame(it = x,
                  no = factor(names[y]),
-                 dim = c("ACO", "EPG"),
+                 dim = dim_names,
                  y = unlist(urrMSE(fun_true = m_true_comp$cov_preds$fit[[y]],
                                    fun_estim = cov_preds$mul[[x]]$fit[[y]],
                                    flip = FALSE, relative = relative)),
@@ -973,7 +983,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
 
             data.frame(it = x,
                        no = factor(names[v]),
-                       dim = c("ACO", "EPG")[y],
+                       dim = dim_names[y],
                        y = mrrMSE(fun_true =
                                     m_true_comp$cov_preds$fit[[u]][[y]],
                                   fun_estim = cov_preds$uni[[x]][[y]]$fit[[z]],
