@@ -529,20 +529,24 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   error_var <- load_sim_results(folder = folder, component = "error_var")
 
-  true_sig <- m_true_comp$error_var$modelsig2 /
-    m_true_comp$error_var$modelweights
+  if (length(m_true_comp$error_var$modelweights) == 1) {
+    true_sig <- m_true_comp$error_var$modelsig2
+  } else {
+    true_sig <- m_true_comp$error_var$modelsig2 /
+      m_true_comp$error_var$modelweights
+  }
 
   dat_err <- do.call(rbind, lapply(seq_along(error_var$mul),
                                    function (x, true) {
 
     sigma_hat <- error_var$mul[[x]]$modelsig2 / error_var$mul[[x]]$modelweights
-    data.frame(it = rep(x, times = length(sigma_hat)),
+    data.frame(it = rep(x, times = length(true_sig)),
                hat = sigma_hat,
-               no = factor(1:length(sigma_hat),
-                           labels = if(length(sigma_hat) == 1) {
+               no = factor(seq_along(true_sig),
+                           labels = if(length(true_sig) == 1) {
                              "sigma^2"
                            } else {
-                             c(paste0("sigma[dim", 1:length(sigma_hat),
+                             c(paste0("sigma[dim", seq_along(true_sig),
                                       "]^2"))}),
                true = true,
                y = mapply(function (x, y) {
