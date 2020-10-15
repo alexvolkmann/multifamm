@@ -5,7 +5,7 @@
 \title{Evaluate the model components per dimension in the simulation}
 \usage{
 sim_eval_dimensions(folder, m_true_comp, label_cov, relative = TRUE,
-  uni_compare = FALSE)
+  uni_compare = FALSE, I = 9, J = 16, reps = 5, nested = FALSE)
 }
 \arguments{
 \item{folder}{Folder with saved objects from the simulation.}
@@ -19,6 +19,14 @@ Defaults to TRUE.}
 
 \item{uni_compare}{TRUE if the simulation scenario includes univariate model
 estimates that should be also evaluated. Defaults to FALSE.}
+
+\item{I}{Number of levels for component B. Defaults to 9.}
+
+\item{J}{Number of levels for component C. Defaults to 16.}
+
+\item{reps}{Number of repetitions of the levels of B and C. Defaults to 5.}
+
+\item{nested}{TRUE if the model component C is nested. Defaults to FALSE.}
 }
 \description{
 This is an internal function. The function takes the folder containing the

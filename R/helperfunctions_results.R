@@ -741,7 +741,8 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
 #' @param uni_compare TRUE if the simulation scenario includes univariate model
 #'   estimates that should be also evaluated. Defaults to FALSE.
 sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
-                                 relative = TRUE, uni_compare = FALSE) {
+                                 relative = TRUE, uni_compare = FALSE,
+                                 I = 9, J = 16, reps = 5, nested = FALSE) {
 
   dim_names <- paste0("dim", seq_along(m_true_comp$fitted_curves))
 
@@ -831,8 +832,8 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
   fitted_cu <- load_sim_results(folder = folder, component = "fitted_cu",
                                 uni = uni_compare)
 
-  fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = 9, J = 16,
-                                 reps = 5)
+  fit_true <- compute_fitted_sim(fitted_cu = fitted_cu, I = I, J = J,
+                                 reps = reps, nested = nested)
 
   dat_fit_m <- do.call(rbind, lapply(seq_along(fitted_cu$mul), function (x) {
       data.frame(it = x,
