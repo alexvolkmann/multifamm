@@ -5,7 +5,7 @@
 \title{Evaluate the model components in the simulation}
 \usage{
 sim_eval_components(folder, m_true_comp, label_cov, relative = TRUE, I = 9,
-  J = 16, reps = 5, nested = FALSE)
+  J = 16, reps = 5, nested = FALSE, fixed_fpc = TRUE)
 }
 \arguments{
 \item{folder}{Folder with saved objects from the simulation.}
@@ -24,6 +24,10 @@ Defaults to TRUE.}
 \item{reps}{Number of repetitions of the levels of B and C. Defaults to 5.}
 
 \item{nested}{TRUE if the model component C is nested. Defaults to FALSE.}
+
+\item{fixed_fpc}{FALSE if the number of FPCs in the model is selected by the
+model not by the user. This means that eigenvalues, scores and
+eigenfunctions are not evaluated. Defaults to TRUE.}
 }
 \description{
 This is an internal function. The function takes the folder containing the

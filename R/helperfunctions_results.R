@@ -522,9 +522,12 @@ funData2DataFrame <- function(fundata) {
 #' @param J Number of levels for component C. Defaults to 16.
 #' @param reps Number of repetitions of the levels of B and C. Defaults to 5.
 #' @param nested TRUE if the model component C is nested. Defaults to FALSE.
+#' @param fixed_fpc FALSE if the number of FPCs in the model is selected by the
+#'   model not by the user. This means that eigenvalues, scores and
+#'   eigenfunctions are not evaluated. Defaults to TRUE.
 sim_eval_components <- function (folder, m_true_comp, label_cov,
                                  relative = TRUE, I = 9, J = 16, reps = 5,
-                                 nested = FALSE) {
+                                 nested = FALSE, fixed_fpc = TRUE) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   error_var <- load_sim_results(folder = folder, component = "error_var")
@@ -559,73 +562,80 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   eigenvals <- load_sim_results(folder = folder, component = "eigenvals")
 
-  dat_val <- do.call(rbind, lapply(names(m_true_comp$eigenvals), function (x) {
-    do.call(rbind, lapply(seq_along(eigenvals$mul), function (y, true) {
-      vals <- eigenvals$mul[[y]][[x]]
-      data.frame(it = rep(y, times = length(vals)),
-                 hat = vals,
-                 no = factor(1:length(vals),
-                             labels = paste0("upsilon[", seq_along(vals),
-                                             "]^", x)),
-                 true = true,
-                 y = mapply(function (u, v) {
-                   rrMSE(theta_true = u, theta_estim = v, relative = relative)
-                 }, true, vals),
-                 comp = "Eigenvalues")
-    }, true = m_true_comp$eigenvals[[x]]))
-  }))
+  if (fixed_fpc) {
+    dat_val <- do.call(rbind, lapply(names(m_true_comp$eigenvals),
+                                     function (x) {
+      do.call(rbind, lapply(seq_along(eigenvals$mul), function (y, true) {
+        vals <- eigenvals$mul[[y]][[x]]
+        data.frame(it = rep(y, times = length(vals)),
+                   hat = vals,
+                   no = factor(1:length(vals),
+                               labels = paste0("upsilon[", seq_along(vals),
+                                               "]^", x)),
+                   true = true,
+                   y = mapply(function (u, v) {
+                     rrMSE(theta_true = u, theta_estim = v, relative = relative)
+                   }, true, vals),
+                   comp = "Eigenvalues")
+      }, true = m_true_comp$eigenvals[[x]]))
+    }))
+  }
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   eigscores <- load_sim_results(folder = folder, component = "eigscores")
   eigenfcts <- load_sim_results(folder = folder, component = "eigenfcts")
 
-  eigscores$mul_flip <- lapply(seq_along(eigscores$mul), function (y) {
-    scores <- lapply(names(eigscores$mul[[1]]), function (x) {
-      flip_scores(fun_true = m_true_comp$eigenfcts[[x]],
-                  fun_estim = eigenfcts$mul[[y]][[x]],
-                  score_estim = eigscores$mul[[y]][[x]])
+  if (fixed_fpc) {
+    eigscores$mul_flip <- lapply(seq_along(eigscores$mul), function (y) {
+      scores <- lapply(names(eigscores$mul[[1]]), function (x) {
+        flip_scores(fun_true = m_true_comp$eigenfcts[[x]],
+                    fun_estim = eigenfcts$mul[[y]][[x]],
+                    score_estim = eigscores$mul[[y]][[x]])
+      })
+      names(scores) <- names(eigscores$mul[[1]])
+      scores
     })
-    names(scores) <- names(eigscores$mul[[1]])
-    scores
-  })
 
-  dat_sco <- do.call(rbind, lapply(names(eigscores$mul_flip[[1]]),
-                                   function (x) {
-    do.call(rbind, lapply(seq_along(eigscores$mul_flip), function (y) {
-      scores <- eigscores$mul_flip[[y]][[x]]
-      true <- eigscores$tru[[y]][[x]]
-      data.frame(it = rep(y, times = ncol(scores)),
-                 no = factor(1:ncol(scores),
-                             labels = paste0("rho[",seq_len(ncol(scores)),
-                                             "]^", x)),
-                 y = sapply(1:ncol(scores), function (z) {
-                   rrMSE(theta_true = true[, z], theta_estim = scores[, z],
-                         relative = relative)
-                 }),
-                 comp = "Scores")
-    }))
-  }))
+    dat_sco <- do.call(rbind, lapply(names(eigscores$mul_flip[[1]]),
+                                     function (x) {
+     do.call(rbind, lapply(seq_along(eigscores$mul_flip), function (y) {
+       scores <- eigscores$mul_flip[[y]][[x]]
+       true <- eigscores$tru[[y]][[x]]
+       data.frame(it = rep(y, times = ncol(scores)),
+                  no = factor(1:ncol(scores),
+                              labels = paste0("rho[",seq_len(ncol(scores)),
+                                              "]^", x)),
+                  y = sapply(1:ncol(scores), function (z) {
+                    rrMSE(theta_true = true[, z], theta_estim = scores[, z],
+                          relative = relative)
+                  }),
+                  comp = "Scores")
+     }))
+   }))
+  }
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Eigenfunctions
-  dat_fun <- do.call(rbind, lapply(names(eigenfcts$mul[[1]]), function (x) {
-    do.call(rbind, lapply(seq_along(eigenfcts$mul), function (y) {
-      fcts <- eigenfcts$mul[[y]][[x]]
-      data.frame(it = rep(y, times = funData::nObs(fcts)),
-                 no = factor(1:funData::nObs(fcts),
-                             labels = paste0("psi[",
-                                             seq_len(funData::nObs(fcts)),
-                                             "]^", x)),
-                 y = sapply(1:funData::nObs(fcts), function (z) {
-                   mrrMSE(
-                     fun_true = funData::extractObs(m_true_comp$eigenfcts[[x]],
-                                                    obs = z),
-                     fun_estim = funData::extractObs(fcts, obs = z),
-                     flip = TRUE, relative = relative)
-                 }),
-                 comp = "Eigenfunctions")
+  if(fixed_fpc) {
+    dat_fun <- do.call(rbind, lapply(names(eigenfcts$mul[[1]]), function (x) {
+      do.call(rbind, lapply(seq_along(eigenfcts$mul), function (y) {
+        fcts <- eigenfcts$mul[[y]][[x]]
+        data.frame(it = rep(y, times = funData::nObs(fcts)),
+                   no = factor(1:funData::nObs(fcts),
+                               labels = paste0("psi[",
+                                               seq_len(funData::nObs(fcts)),
+                                               "]^", x)),
+                   y = sapply(1:funData::nObs(fcts), function (z) {
+                     mrrMSE(
+                       fun_true = funData::extractObs(
+                         m_true_comp$eigenfcts[[x]], obs = z),
+                       fun_estim = funData::extractObs(fcts, obs = z),
+                       flip = TRUE, relative = relative)
+                   }),
+                   comp = "Eigenfunctions")
+      }))
     }))
-  }))
+  }
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariance operator
@@ -720,8 +730,9 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
   comb <- c("it", "no", "y", "comp")
-  dat <- rbind(dat_fit, dat_ran, dat_err[, comb], dat_cop, dat_val[,comb],
-               dat_fun, dat_sco, dat_cov)
+  dat <- rbind(dat_fit, dat_ran, dat_err[, comb], dat_cop,
+               if (fixed_fpc) dat_val[,comb],
+               if (fixed_fpc) dat_fun, if (fixed_fpc) dat_sco, dat_cov)
 
   dat
 
