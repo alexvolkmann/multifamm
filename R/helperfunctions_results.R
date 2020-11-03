@@ -903,6 +903,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
 
   dat_mu_m <- do.call(rbind, lapply(seq_along(fitted_cu$tru), function (x) {
     data.frame(it = x,
+               dim = dim_names,
                no = factor("mu"),
                y = unlist(urrMSE(fun_true = fitted_cu$tru[[x]]$mu,
                           fun_estim = mu_mul[[x]],
