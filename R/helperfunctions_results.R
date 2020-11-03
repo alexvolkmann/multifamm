@@ -709,6 +709,21 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
                comp = "Fit")
   }))
 
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+  # Mean
+  mu_estim <- compute_mu_sim(fitted_cu = fitted_cu, ran_preds = ran_preds,
+                             I = I, J = J, reps = reps, nested = nested)
+
+  dat_mu <- do.call(rbind, lapply(seq_along(fitted_cu$tru), function (x) {
+    data.frame(it = x,
+               no = factor(1, label = "mu"),
+               y = mrrMSE(fun_true = fitted_cu$tru[[x]]$mu,
+                          fun_estim = mu_estim[[x]],
+                          flip = FALSE, relative = relative),
+               comp = "Fit")
+  }))
+
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariate effects
   cov_preds <- load_sim_results(folder = folder, component = "cov_preds")
@@ -730,7 +745,7 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
 
   comb <- c("it", "no", "y", "comp")
-  dat <- rbind(dat_fit, dat_ran, dat_err[, comb], dat_cop,
+  dat <- rbind(dat_fit, dat_ran, dat_mu, dat_err[, comb], dat_cop,
                if (fixed_fpc) dat_val[,comb],
                if (fixed_fpc) dat_fun, if (fixed_fpc) dat_sco, dat_cov)
 
@@ -876,6 +891,44 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
   dat_fit <- rbind(dat_fit_m, dat_fit_u)
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
+  # Mean
+  mu_mul <- compute_mu_sim(fitted_cu = fitted_cu, ran_preds = ran_preds,
+                           I = I, J = J, reps = reps, nested = nested,
+                           mul = TRUE)
+  if (uni_compare) {
+    mu_uni <- compute_mu_sim(fitted_cu = fitted_cu, ran_preds = ran_preds,
+                             I = I, J = J, reps = reps, nested = nested,
+                             mul = FALSE)
+  }
+
+  dat_mu_m <- do.call(rbind, lapply(seq_along(fitted_cu$tru), function (x) {
+    data.frame(it = x,
+               no = factor("mu"),
+               y = unlist(urrMSE(fun_true = fitted_cu$tru[[x]]$mu,
+                          fun_estim = mu_mul[[x]],
+                          flip = FALSE, relative = relative)),
+               comp = "Fit",
+               method = factor("mul"))
+  }))
+
+  dat_mu_u <- if (uni_compare) {
+    do.call(rbind, lapply(seq_along(mu_uni), function (x) {
+      do.call(rbind, lapply(seq_along(mu_uni[[1]]), function (y) {
+        data.frame(it = x,
+                   dim = dim_names[y],
+                   no = factor("mu"),
+                   y = mrrMSE(fun_true = fitted_cu$tru[[x]]$mu[[y]],
+                              fun_estim = mu_uni[[x]][[y]],
+                              flip = FALSE, relative = relative),
+                   comp = factor("Fit"),
+                   method = factor("uni"))
+      }))
+    }))
+  } else NULL
+
+  dat_mu <- rbind(dat_mu_m, dat_mu_u)
+
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariance operator
   eigenvals <- load_sim_results(folder = folder, component = "eigenvals",
                                 uni = uni_compare)
@@ -1011,7 +1064,7 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   comb <- c("it", "no", "y", "comp", "dim", "method")
-  dat <- rbind(dat_fit, dat_ran, dat_err[, comb], dat_cop, dat_cov)
+  dat <- rbind(dat_fit, dat_ran, dat_mu, dat_err[, comb], dat_cop, dat_cov)
 
   dat
 
@@ -1707,3 +1760,86 @@ return_number_fpcs <- function (folder, uni = FALSE) {
   rbind(dat_m, dat_u)
 
 }
+
+#------------------------------------------------------------------------------#
+# Compute the Fitted Mean Trajectories
+#------------------------------------------------------------------------------#
+#' Compute the Fitted Mean Trajectories
+#'
+#' This is an internal function. It takes the fitted curves object of the
+#' simulation and the random effects object and calculates the estimated mu
+#' functions.
+#'
+#' @param fitted_cu Object of fitted curves saved from the simulation.
+#' @param ran_preds Object of random effects saved from the simulation.
+#' @param mul FALSE if the univariate estimate is extracted from fitted_cu.
+#'   Defaults to TRUE which is the multivariate estimate.
+#'
+#' @inheritParams sim_eval_components
+compute_mu_sim <- function (fitted_cu, ran_preds, I = 10, J = 16, reps = 5,
+                            nested = FALSE, mul = TRUE) {
+
+  reps_B <- rep(reps*J, times = I)
+  reps_C <- rep(reps, times = J)
+
+  # For Random Intercept of Subject
+  if ("B" %in% names(ran_preds$mul[[1]])) {
+    re_B <- lapply(seq_along(ran_preds$mul), function (x) {
+      multiFunData(lapply(ran_preds$mul[[x]]$B, function (y) {
+        funData(argvals = argvals(y),
+                X = y@X[rep(1:nrow(y@X), times = reps_B), ])
+      }))
+    })
+  } else {
+    # Zero object
+    re_B <- lapply(seq_along(ran_preds$mul), function (x) {
+      argvals <- argvals(ran_preds$mul[[x]]$mu[[1]])
+      multiFunData(lapply(seq_along(ran_preds$mul[[x]]$mu), function (y) {
+        funData(argvals = argvals,
+                X = matrix(0, nrow = nObs(ran_preds$mul[[x]]$mu),
+                           ncol = length(unlist(argvals))))
+      }))
+    })
+  }
+
+  # Has not been tested for C in names()
+  if ("C" %in% names(ran_preds$mul[[1]])) {
+    if(!nested) {
+      re_C <- lapply(seq_along(ran_preds$mul), function (x) {
+        multiFunData(lapply(ran_preds$mul[[x]]$C, function (y) {
+          funData(argvals = argvals(y),
+                  X = y@X[rep(rep(1:nrow(y@X), times = reps_C), times = I), ])
+        }))
+      })
+    } else {
+      re_C <- lapply(seq_along(ran_preds$mul), function (x) {
+        multiFunData(lapply(ran_preds$mul[[x]]$C, function (y) {
+          funData(argvals = argvals(y),
+                  X = y@X[rep(1:nrow(y@X), each = reps), ])
+        }))
+      })
+    }
+  } else {
+    # Zero object
+    re_C <- lapply(seq_along(ran_preds$mul), function (x) {
+      argvals <- argvals(ran_preds$mul[[1]]$E[[1]])
+      multiFunData(lapply(seq_along(ran_preds$mul[[x]]$E), function (y) {
+        funData(argvals = argvals,
+                X = matrix(0, nrow = nObs(ran_preds$mul[[x]]$E),
+                           ncol = length(unlist(argvals))))
+      }))
+    })
+  }
+
+  if (mul) {
+    mapply(function (fit, x, y, z) {
+      fit - x$E - y - z
+    }, fitted_cu$mul, ran_preds$mul, re_B, re_C, SIMPLIFY = FALSE)
+  } else {
+    mapply(function (fit, x, y, z) {
+      funData::multiFunData(fit) - x$E - y - z
+    }, fitted_cu$uni, ran_preds$mul, re_B, re_C, SIMPLIFY = FALSE)
+  }
+
+}
+#------------------------------------------------------------------------------#
