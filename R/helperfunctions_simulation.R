@@ -66,6 +66,8 @@
 #' @param decor_scores TRUE: FPC weights are decorrelated. Defaults to FALSE.
 #' @param nested_center TRUE: FPC weights of the nested effect are centered
 #'   around zero for each subject. Defaults to FALSE.
+#' @param trajectory TRUE: All dimensions are observed at the same time points
+#'   as would be (ideally) the case for the snooker data. Defaults to FALSE.
 gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
                     lamB, lamC, lamE, normal = TRUE,
                     sigmasq = list(0.05, 4), dim_indep = TRUE,
@@ -80,7 +82,7 @@ gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
                     interaction = FALSE, which_inter = matrix(NA),
                     model = NULL,
                     center_scores = FALSE, decor_scores = FALSE,
-                    nested_center = FALSE){
+                    nested_center = FALSE, trajectory = FALSE){
 
   if(any(!require(data.table) | !require(funData))){
     stop("Packages data.table and funData have to be installed.")
@@ -158,11 +160,17 @@ gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
   #++++++++++++++++++++++++++++++++++++++++++++++++++++#
 
   # Different number of observations on each dimension
-  if (minsize != maxsize) {
-    number <- sample(x = rep(minsize:maxsize), size = num_dim*n, replace = TRUE)
+  if (!trajectory) {
+    if (minsize != maxsize) {
+      number <- sample(x = rep(minsize:maxsize), size = num_dim*n,
+                       replace = TRUE)
+    } else {
+      # Number of time points per curve
+      number <- rep(minsize, length = num_dim*n)
+    }
   } else {
-    # Number of time points per curve
-    number <- rep(minsize, length = num_dim*n)
+    number <- rep(sample(x = seq(minsize, maxsize), size = n, replace = TRUE),
+                  times = num_dim)
   }
 
   # Contains the total amount of observation points of each curve
@@ -309,9 +317,17 @@ gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
   locs <- list()
 
   # For each curve i = 1, ..., n on all the dimensions
-  for (i in 1:(n*num_dim)) {
-    locs[[i]] <- runif(n = number[i], min = min_grid, max = max_grid)
+  if (!trajectory) {
+    for (i in 1:(n*num_dim)) {
+      locs[[i]] <- runif(n = number[i], min = min_grid, max = max_grid)
+    }
+  } else {
+    for (i in 1:n) {
+      locs[[i]] <- runif(n = number[i], min = min_grid, max = max_grid)
+    }
+    locs <- rep(locs, times = num_dim)
   }
+
 
   # Now bring time points in order before functions are constructed
   t <- list()
