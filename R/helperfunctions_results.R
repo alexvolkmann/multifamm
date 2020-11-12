@@ -312,14 +312,24 @@ extract_Eigenfct_sim_uni <- function (number, component, eigenfcts) {
 #------------------------------------------------------------------------------#
 # Extract the Estimated Covariate Effect for One Specific Model Term
 #------------------------------------------------------------------------------#
-extract_Covfct_sim <- function (term, m_true_comp, cov_preds) {
+#' Extract the Estimated Covariate Effect for One Specific Model Term
+#'
+#' This is an internal function. The function extracts one single effect
+#' function from the simulated effects and adds the true observation as the last
+#' observation.
+#'
+#' @param term Name of the covariate effect function to extract.
+#' @param m_true_comp True model component from which to extract the true
+#'  observation.
+#' @param cov_preds List of simulation results from which to extract (as given
+#'  by e.g. load_sim_results()).
+#' @param se TRUE if the standard error is to be extracted instead of the
+#'  estimated function. Defaults to FALSE.
+extract_Covfct_sim <- function (term, m_true_comp, cov_preds, se = FALSE) {
 
-  # Arguments
-  # term        : Name of covariate effect term
-  # m_true_comp : True model components
-  # eigenfcts   : Simulation results of covariate effects
+  se <- if (se) "se.fit" else "fit"
 
-  covs <- lapply(cov_preds$mul, function (x) x$fit[[term]])
+  covs <- lapply(cov_preds$mul, function (x) x[[se]][[term]])
 
   # Extract the observations and create the X-matrix
   estims <- lapply(covs, function (x) {
@@ -333,12 +343,12 @@ extract_Covfct_sim <- function (term, m_true_comp, cov_preds) {
   # Concatenate the true eigenfunction
   estims <- lapply(seq_along(estims), function (x) {
     rbind(estims[[x]],
-          m_true_comp$cov_preds$fit[[term]]@.Data[[x]]@X)
+          m_true_comp$cov_preds[[se]][[term]]@.Data[[x]]@X)
   })
 
   # Construct the multiFunData Object
   multiFunData(lapply(estims, function (x) {
-    funData(argvals = argvals(cov_preds$mul[[1]]$fit[[term]][[1]]),
+    funData(argvals = argvals(cov_preds$mul[[1]][[se]][[term]][[1]]),
             X = x)
   }))
 
@@ -1780,13 +1790,24 @@ return_number_fpcs <- function (folder, uni = FALSE) {
 compute_mu_sim <- function (fitted_cu, ran_preds, I = 10, J = 16, reps = 5,
                             nested = FALSE, mul = TRUE) {
 
+  list_element <- if (mul) "mul" else "uni"
   reps_B <- rep(reps*J, times = I)
   reps_C <- rep(reps, times = J)
+
+  if (!mul) {
+    ran_preds$uni <- lapply(seq_along(ran_preds$uni), function (it) {
+      obj <- lapply(names(ran_preds$uni[[it]][[1]]), function (comp) {
+        multiFunData(lapply(ran_preds$uni[[it]], "[[", comp))
+      })
+      names(obj) <- names(ran_preds$uni[[it]][[1]])
+      obj
+    })
+  }
 
   # For Random Intercept of Subject
   if ("B" %in% names(ran_preds$mul[[1]])) {
     re_B <- lapply(seq_along(ran_preds$mul), function (x) {
-      multiFunData(lapply(ran_preds$mul[[x]]$B, function (y) {
+      multiFunData(lapply(ran_preds[[list_element]][[x]]$B, function (y) {
         funData(argvals = argvals(y),
                 X = y@X[rep(1:nrow(y@X), times = reps_B), ])
       }))
@@ -1794,10 +1815,10 @@ compute_mu_sim <- function (fitted_cu, ran_preds, I = 10, J = 16, reps = 5,
   } else {
     # Zero object
     re_B <- lapply(seq_along(ran_preds$mul), function (x) {
-      argvals <- argvals(ran_preds$mul[[x]]$mu[[1]])
+      argvals <- argvals(ran_preds[[list_element]][[x]]$mu[[1]])
       multiFunData(lapply(seq_along(ran_preds$mul[[x]]$mu), function (y) {
         funData(argvals = argvals,
-                X = matrix(0, nrow = nObs(ran_preds$mul[[x]]$mu),
+                X = matrix(0, nrow = nObs(ran_preds[[list_element]][[x]]$mu),
                            ncol = length(unlist(argvals))))
       }))
     })
@@ -1807,14 +1828,14 @@ compute_mu_sim <- function (fitted_cu, ran_preds, I = 10, J = 16, reps = 5,
   if ("C" %in% names(ran_preds$mul[[1]])) {
     if(!nested) {
       re_C <- lapply(seq_along(ran_preds$mul), function (x) {
-        multiFunData(lapply(ran_preds$mul[[x]]$C, function (y) {
+        multiFunData(lapply(ran_preds[[list_element]][[x]]$C, function (y) {
           funData(argvals = argvals(y),
                   X = y@X[rep(rep(1:nrow(y@X), times = reps_C), times = I), ])
         }))
       })
     } else {
       re_C <- lapply(seq_along(ran_preds$mul), function (x) {
-        multiFunData(lapply(ran_preds$mul[[x]]$C, function (y) {
+        multiFunData(lapply(ran_preds[[list_element]][[x]]$C, function (y) {
           funData(argvals = argvals(y),
                   X = y@X[rep(1:nrow(y@X), each = reps), ])
         }))
@@ -1826,7 +1847,7 @@ compute_mu_sim <- function (fitted_cu, ran_preds, I = 10, J = 16, reps = 5,
       argvals <- argvals(ran_preds$mul[[1]]$E[[1]])
       multiFunData(lapply(seq_along(ran_preds$mul[[x]]$E), function (y) {
         funData(argvals = argvals,
-                X = matrix(0, nrow = nObs(ran_preds$mul[[x]]$E),
+                X = matrix(0, nrow = nObs(ran_preds[[list_element]][[x]]$E),
                            ncol = length(unlist(argvals))))
       }))
     })
@@ -1839,7 +1860,7 @@ compute_mu_sim <- function (fitted_cu, ran_preds, I = 10, J = 16, reps = 5,
   } else {
     mapply(function (fit, x, y, z) {
       funData::multiFunData(fit) - x$E - y - z
-    }, fitted_cu$uni, ran_preds$mul, re_B, re_C, SIMPLIFY = FALSE)
+    }, fitted_cu$uni, ran_preds$uni, re_B, re_C, SIMPLIFY = FALSE)
   }
 
 }

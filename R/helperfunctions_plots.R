@@ -379,3 +379,66 @@ covariate_comp_plot_helper <- function(dat_m, aco_pr, epg_pr, mul_level,
   dat
 
 }
+
+
+
+# Fct Coverage Area Plot Helper -------------------------------------------
+
+#' Coverage Area Plot Helper Function
+#'
+#' This function is an internal function. The function takes one single effect
+#' function from the simulated effects and gives a data.frame which can be used
+#' to plot the coverage area of all simulation runs.
+#'
+#' @param ylim Two element numeric vector specifying the area for which the
+#'   coverage is to be plotted. Defaults to c(-0.5, 0.5).
+#' @param by Step size for the grid of y values to check for coverage.
+#'   Defaults to 1/99.
+#' @inheritParams create_coverage_array
+coverage_area_helper <- function(sim_curves, effect_index, ylim = c(-0.5, 0.5),
+                                 by = 1/99, m_fac = 1.96){
+
+  niter <- length(sim_curves)
+
+  # Create upper and lower bounds of each simulation run
+  # Extract original curve
+  # Sum up functional and scalar intercept if necessary
+  if (effect_index %in% c(1, 2)) {
+    sim_up <- lapply(sim_curves, function (it) {
+      it$fit[[1]] + it$fit[[2]] + m_fac * (it$se.fit[[1]] + it$se.fit[[2]])
+    })
+    sim_do <- lapply(sim_curves, function (it) {
+      it$fit[[1]] + it$fit[[2]] - m_fac * (it$se.fit[[1]] + it$se.fit[[2]])
+    })
+  } else {
+    sim_up <- lapply(sim_curves, function (it) {
+      it$fit[[effect_index]] + m_fac * (it$se.fit[[effect_index]])
+    })
+    sim_do <- lapply(sim_curves, function (it) {
+      it$fit[[effect_index]] - m_fac * (it$se.fit[[effect_index]])
+    })
+  }
+
+  # Create the grid points that are to be checked
+  xseq <- seq(0, 1, length.out = 100)
+  yseq <- seq(from = ylim[1], to = ylim[2], by = by)
+
+  # Evaluate each y position for each x position and each dimension
+  dat <- lapply(seq_along(sim_do[[1]]), function (dim) {
+    x_list <- lapply(seq_len(100), function (xpos){
+      y_list <- lapply(yseq, function (yval) {
+        covered <- mapply(function (lim_up, lim_do){
+          yval > lim_do[[dim]]@X[, xpos] & yval < lim_up[[dim]]@X[, xpos]
+        }, lim_up = sim_up, lim_do = sim_do, SIMPLIFY = FALSE)
+        data.frame(dim = paste0("dim", dim),
+                   t = xseq[xpos],
+                   ypos = yval,
+                   cov = sum(unlist(covered))/niter)
+      })
+      do.call(rbind, y_list)
+    })
+    do.call(rbind, x_list)
+  })
+  do.call(rbind, dat)
+
+}
