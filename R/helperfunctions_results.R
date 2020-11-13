@@ -737,6 +737,18 @@ sim_eval_components <- function (folder, m_true_comp, label_cov,
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   # Covariate effects
   cov_preds <- load_sim_results(folder = folder, component = "cov_preds")
+  cov_preds$mul <- lapply(cov_preds$mul, function (it) {
+    lapply(it, function (se_fit) {
+      se_fit[[2]] <- se_fit[[1]] + se_fit[[2]]
+      se_fit[[1]] <- NULL
+      se_fit
+    })
+  })
+
+  m_true_comp$cov_preds$fit[[2]] <- m_true_comp$cov_preds$fit[[1]] +
+    m_true_comp$cov_preds$fit[[2]]
+  m_true_comp$cov_preds$fit[[1]] <- NULL
+
   names <- label_cov
 
   dat_cov <- do.call(rbind, lapply(seq_along(cov_preds$mul), function (x) {
@@ -1028,6 +1040,28 @@ sim_eval_dimensions <- function (folder, m_true_comp, label_cov,
   # Covariate effects
   cov_preds <- load_sim_results(folder = folder, component = "cov_preds",
                                 uni = uni_compare)
+  cov_preds$mul <- lapply(cov_preds$mul, function (it) {
+    lapply(it, function (se_fit) {
+      se_fit[[2]] <- se_fit[[1]] + se_fit[[2]]
+      se_fit[[1]] <- NULL
+      se_fit
+    })
+  })
+  m_true_comp$cov_preds$fit[[2]] <- m_true_comp$cov_preds$fit[[1]] +
+    m_true_comp$cov_preds$fit[[2]]
+  m_true_comp$cov_preds$fit[[1]] <- NULL
+
+  if (uni_compare) {
+    cov_preds$uni <- lapply(cov_preds$uni, function (it) {
+      lapply(it, function (dim) {
+        lapply(dim, function (se_fit) {
+          se_fit[[2]] <- se_fit[[1]] + se_fit[[2]]
+          se_fit[[1]] <- NULL
+          se_fit
+        })
+      })
+    })
+  }
   names <- label_cov
 
   dat_cov_m <- do.call(rbind, lapply(seq_along(cov_preds$mul), function (x) {
