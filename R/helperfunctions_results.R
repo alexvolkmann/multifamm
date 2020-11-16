@@ -535,18 +535,25 @@ funData2DataFrame <- function(fundata) {
 #' @param fixed_fpc FALSE if the number of FPCs in the model is selected by the
 #'   model not by the user. This means that eigenvalues, scores and
 #'   eigenfunctions are not evaluated. Defaults to TRUE.
+#' @param sigma2 Vector of true values can be supplied if they differ from the
+#'   values in m_true_comp. Defaults to NULL.
 sim_eval_components <- function (folder, m_true_comp, label_cov,
                                  relative = TRUE, I = 9, J = 16, reps = 5,
-                                 nested = FALSE, fixed_fpc = TRUE) {
+                                 nested = FALSE, fixed_fpc = TRUE,
+                                 sigma2 = NULL) {
 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
   error_var <- load_sim_results(folder = folder, component = "error_var")
 
-  if (length(m_true_comp$error_var$modelweights) == 1) {
-    true_sig <- m_true_comp$error_var$modelsig2
+  if(is.null(sigma2)) {
+    if (length(m_true_comp$error_var$modelweights) == 1) {
+      true_sig <- m_true_comp$error_var$modelsig2
+    } else {
+      true_sig <- m_true_comp$error_var$modelsig2 /
+        m_true_comp$error_var$modelweights
+    }
   } else {
-    true_sig <- m_true_comp$error_var$modelsig2 /
-      m_true_comp$error_var$modelweights
+    true_sig <- sigma2
   }
 
   dat_err <- do.call(rbind, lapply(seq_along(error_var$mul),
