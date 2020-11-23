@@ -297,7 +297,7 @@ predict_re <- function (model, component = c("E", "B", "C"), dimnames,
 
   # Identify the different levels for which the Random Effects exist
   # Combine to a data.frame
-  fac_var <- switch(component, "E" = "n_long", "B" = "subject_long",
+  fac_var <- switch(EXPR = component, "E" = "n_long", "B" = "subject_long",
                     "C" = "word_long")
   var_levels <- unique(model$model$model[, fac_var])
   dat <- expand.grid(grid, dimnames, var_levels)

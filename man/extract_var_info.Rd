@@ -7,7 +7,7 @@
 extract_var_info(MFPC = MFPC)
 }
 \arguments{
-\item{MFPCA}{MFPCA object from which to extract multivariate eigenvalues and
+\item{MFPC}{MFPCA object from which to extract multivariate eigenvalues and
 univariate norms.}
 }
 \description{

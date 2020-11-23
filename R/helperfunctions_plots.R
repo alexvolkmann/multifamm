@@ -27,25 +27,27 @@
 #' (multifamm model).
 #' @param m_fac Multiplication factor to represent the difference from the
 #' overall mean.
-#' @importFrom magrittr %>%
 fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
                             multi = TRUE, m_fac = 2) {
+
+  # Define the pipe operator
+  `%>%` <- magrittr::`%>%`
 
   # Extract the mean function (all covariates are 0.5 and scalar intercept is
   # already added), eigenfunctions and eigenvalues
   if (missing(model)) {
 
     # mcomp is given
-    meanfun <- multifamm:::funData2DataFrame(fundata = mcomp$meanfun)
-    phi <- multifamm:::funData2DataFrame(fundata = mcomp$eigenfcts[[component]])
+    meanfun <- funData2DataFrame(fundata = mcomp$meanfun)
+    phi <- funData2DataFrame(fundata = mcomp$eigenfcts[[component]])
     lambda <- mcomp$eigenvals[[component]]
 
   } else {
 
     # model is given
     meanfun <- predict_mean(model = model, multi = multi, dimnames = dimlabels)
-    meanfun <- multifamm:::funData2DataFrame(fundata = meanfun)
-    phi <- multifamm:::funData2DataFrame(fundata =
+    meanfun <- funData2DataFrame(fundata = meanfun)
+    phi <- funData2DataFrame(fundata =
                                            model$mfpc[[component]]$functions)
     lambda <- model$mfpc[[component]]$values
 
@@ -106,9 +108,11 @@ fpc_plot_helper <- function(model, mcomp, component, dimlabels, two_d = FALSE,
 #' @param m_fac Multiplication factor to represent the confidence interval of
 #' the estimates. Defaults to 1.96.
 #' @inheritParams fpc_plot_helper
-#' @importFrom magrittr %>%
 covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
                                   multi = TRUE, m_fac = 1.96) {
+
+  # Define the pipe operator
+  `%>%` <- magrittr::`%>%`
 
   if (!multi) {
     stop("Not yet implemented for univariate models.")
@@ -134,7 +138,7 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
     # Collapse the list of multiFunData objects to
     data_list <- lapply(mcomp$cov_preds, function (x) {
       out_outer <- lapply(seq_along(x), function (y) {
-        out_inner <- multifamm:::funData2DataFrame(x[[y]])
+        out_inner <- funData2DataFrame(x[[y]])
         out_inner$cov <- y - 1
         out_inner
       })
@@ -145,7 +149,7 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
 
     # model is given
 
-    cov_preds <- multifamm:::predict_covs(model = model, method = "mul",
+    cov_preds <- predict_covs(model = model, method = "mul",
                                           type = "terms", unconditional = FALSE)
     data_list <- lapply(cov_preds, function (x) {
 
@@ -213,10 +217,12 @@ covariate_plot_helper <- function(model, mcomp, dimlabels, int_include = TRUE,
 #'   axis (first for x, then for y axis). Defaults to labels ending with ".x"
 #'   and ".y".
 #' @inheritParams covariate_plot_helper
-#' @importFrom magrittr %>%
 covariate_plot_helper_2d_transform <- function(data, covs = 0L,
                                                indicator = c("\\.x", "\\.y"),
                                                m_fac = 1.96) {
+
+  # Define the pipe operator
+  `%>%` <- magrittr::`%>%`
 
   # Select the covariate
   if (length(covs) == 1) {
@@ -334,9 +340,11 @@ covariance_surf_plot_helper <- function(mcomp, component, dimlabels) {
 #' @param epg_pr Predictions from second univariate model. Can be NULL.
 #' @param mul_level Effect level of the multivariate model to be plotted.
 #' @param uni_effect Number of the univariate effect to be plotted.
-#' @importFrom magrittr %>%
 covariate_comp_plot_helper <- function(dat_m, aco_pr, epg_pr, mul_level,
                                        uni_effect) {
+
+  # Define the pipe operator
+  `%>%` <- magrittr::`%>%`
 
   # Have null object if epg_pr is missing
   if (is.null(epg_pr)) {
@@ -351,9 +359,9 @@ covariate_comp_plot_helper <- function(dat_m, aco_pr, epg_pr, mul_level,
   dat_u <- list("fit" = vector("list", length(uni_effect)),
                 "se.fit" = vector("list", length(uni_effect)))
   for (i in seq_along(uni_effect)) {
-    dat_u$fit[[i]] <- multifamm:::predictedUnivar2DataFrame(
+    dat_u$fit[[i]] <- predictedUnivar2DataFrame(
       aco_pr = aco_pr$fit, epg_pr = epg_pr$fit, effect = uni_effect[i])
-    dat_u$se.fit[[i]] <- multifamm:::predictedUnivar2DataFrame(
+    dat_u$se.fit[[i]] <- predictedUnivar2DataFrame(
       aco_pr = aco_pr$se.fit, epg_pr = epg_pr$se.fit, effect = uni_effect[i])
   }
   dat_u <- lapply(dat_u, function(x) do.call(rbind, x))

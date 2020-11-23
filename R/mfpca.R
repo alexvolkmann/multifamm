@@ -12,7 +12,6 @@
 #' @param model_list List containing sparseFLMM objects for each dimension as
 #'   given by the output of apply_sparseFLMM()
 #' @inheritParams multiFAMM
-#'
 prepare_mfpca <- function(model_list, fRI_B, mfpc_weight){
 
   # Extract the necessary information from the model list
@@ -227,6 +226,7 @@ inflate <- function(model_info){
 #'
 #' @param mfpca_info Object containing all the neccessary information for the
 #'   MFPCA. List as given by the output of prepare_mfpca().
+#' @inheritParams multiFAMM
 conduct_mfpca <- function(mfpca_info, mfpc_weight){
 
   # Actual MFPCA step - for each covariance component separately
@@ -254,7 +254,7 @@ conduct_mfpca <- function(mfpca_info, mfpc_weight){
 #' allows to extract the information of the total variation in the data (multi-
 #' and univariate).
 #'
-#' @param MFPCA MFPCA object from which to extract multivariate eigenvalues and
+#' @param MFPC MFPCA object from which to extract multivariate eigenvalues and
 #'   univariate norms.
 extract_var_info <- function(MFPC = MFPC){
 

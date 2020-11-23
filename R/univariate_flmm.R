@@ -42,7 +42,7 @@ apply_sparseFLMM <- function(fRI_B, fRI_C, nested, bs, bf_mean, bf_covariates,
 
   # Data.tables changes even outside of function so work with copy
   # Not memory efficient but other variable names outside of function
-  data <- copy(data)
+  data <- data.table::copy(data)
 
   # Only change variable names if they are specified
   # Also transform information of fRI to arguments for sparseFLMM
@@ -58,8 +58,8 @@ apply_sparseFLMM <- function(fRI_B, fRI_C, nested, bs, bf_mean, bf_covariates,
     }
   }else{
     # Independent curves
-    # Rather unintuitively, Jona estimates E as B
-    data[, subject_long := n_long]
+    # Rather unintuitively, sparseFLMM estimates E as B
+    data.table::set(data, j = "subject_long", value = data$n_long)
     use_RI <- TRUE
     use_simple <- TRUE
   }
@@ -67,7 +67,7 @@ apply_sparseFLMM <- function(fRI_B, fRI_C, nested, bs, bf_mean, bf_covariates,
   # If only one dimension is to be computed, subset the data to the dimension
   if (! is.null(one_dim)) {
     data <- subset(data, dim == one_dim)
-    data[, dim := droplevels(dim)]
+    data.table::set(data, j = "dim", value = droplevels(data$dim))
     use_famm <- TRUE
     save_model_famm <- TRUE
   }

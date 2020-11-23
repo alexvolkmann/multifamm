@@ -9,6 +9,9 @@ conduct_mfpca(mfpca_info, mfpc_weight)
 \arguments{
 \item{mfpca_info}{Object containing all the neccessary information for the
 MFPCA. List as given by the output of prepare_mfpca().}
+
+\item{mfpc_weight}{TRUE if the estimated univariate error variance is to be
+used as weights in the scalar product of the MFPCA.}
 }
 \description{
 This is an internal function contained in the multiFAMM function. This step

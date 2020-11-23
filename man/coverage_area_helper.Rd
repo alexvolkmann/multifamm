@@ -10,6 +10,11 @@ coverage_area_helper(sim_curves, effect_index, ylim = c(-0.5, 0.5),
 \arguments{
 \item{sim_curves}{The large list of simulation results. Use object$mul.}
 
+\item{effect_index}{The index position of the effect to be evaluated in the
+gen_curves and sim_curves effect lists. If the intercept is to be
+evaluated, this can be specified as 1 or 2 (both scalar and functional
+intercept are sumed up).}
+
 \item{ylim}{Two element numeric vector specifying the area for which the
 coverage is to be plotted. Defaults to c(-0.5, 0.5).}
 

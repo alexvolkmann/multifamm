@@ -84,7 +84,7 @@ gendata <- function(I = 10, J = 10, nested = FALSE, num_dim = 2,
                     center_scores = FALSE, decor_scores = FALSE,
                     nested_center = FALSE, trajectory = FALSE){
 
-  if(any(!require(data.table) | !require(funData))){
+  if(any(!requireNamespace("data.table") | !requireNamespace("funData"))){
     stop("Packages data.table and funData have to be installed.")
   }
 
@@ -978,7 +978,7 @@ prepare_gam_predict <- function (data, num_cov, interaction, which_inter,
 #' @param sim_curves The large list of simulation results. Use object$mul.
 #' @param gen_curves The original data generating curve as part of the output of
 #'   multifamm:::extract_components(), so use output$cov_preds.
-#' @param effec_index The index position of the effect to be evaluated in the
+#' @param effect_index The index position of the effect to be evaluated in the
 #'   gen_curves and sim_curves effect lists. If the intercept is to be
 #'   evaluated, this can be specified as 1 or 2 (both scalar and functional
 #'   intercept are sumed up).

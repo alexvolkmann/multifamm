@@ -13,17 +13,17 @@ create_coverage_array(sim_curves, gen_curves, effect_index, uni = NULL,
 \item{gen_curves}{The original data generating curve as part of the output of
 multifamm:::extract_components(), so use output$cov_preds.}
 
+\item{effect_index}{The index position of the effect to be evaluated in the
+gen_curves and sim_curves effect lists. If the intercept is to be
+evaluated, this can be specified as 1 or 2 (both scalar and functional
+intercept are sumed up).}
+
 \item{uni}{Vector giving the associated order of the data generating effects
 when evaluating univariate models (object$uni). Is NULL for evaluation of
 multivariate models.}
 
 \item{m_fac}{Multiplication factor used to create the upper and lower
 credibility bounds. Defaults to 1.96 (ca. 95\%).}
-
-\item{effec_index}{The index position of the effect to be evaluated in the
-gen_curves and sim_curves effect lists. If the intercept is to be
-evaluated, this can be specified as 1 or 2 (both scalar and functional
-intercept are sumed up).}
 }
 \description{
 This is an internal function. The function takes the index of the covariate
