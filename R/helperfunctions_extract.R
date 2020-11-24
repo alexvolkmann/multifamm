@@ -219,8 +219,9 @@ predict_covs <- function (model, method = c("mul", "uni"),
            dat$t <- grid
 
            # Predict data set
-           pred <- predict(model$model, newdata = dat, type = type,
-                           se.fit = TRUE, unconditional = unconditional)
+           pred <- mgcv::predict.bam(model$model, newdata = dat, type = type,
+                                     se.fit = TRUE,
+                                     unconditional = unconditional)
 
            # Predict the intercept for the other dimensions
            pos <- grep("^dim$", colnames(pred$fit))
@@ -230,8 +231,9 @@ predict_covs <- function (model, method = c("mul", "uni"),
              !levels(model$model$model$dim) %in% levels(droplevels(dat$dim))]
            for (i in dims) {
              dat$dim <- i
-             p <- predict(model$model, newdata = dat, type = type,
-                          se.fit = TRUE, unconditional = unconditional)
+             p <- mgcv::predict.bam(model$model, newdata = dat, type = type,
+                                    se.fit = TRUE,
+                                    unconditional = unconditional)
 
              # Attach intercept and functional intercept to fit
              pred$fit[, paste0("s(t):dim", i)] <- p$fit[, paste0("s(t):dim", i)]
@@ -513,7 +515,8 @@ extract_components_uni <- function (model) {
                   funData::funData(argvals = grid, X = t(x$se))
                 })
   ses <- c(int = funData::funData(argvals = grid,
-                                  X = t(rep(sqrt(vcov(cov_preds$famm_estim)[
+                                  X = t(rep(sqrt(
+                                    stats::vcov(cov_preds$famm_estim)[
                                     "(Intercept)", "(Intercept)"]),
                                     times = length(grid)))),
            ses)

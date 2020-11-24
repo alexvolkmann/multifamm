@@ -163,7 +163,8 @@ prepare_gam <- function(data, bs, bf_covariates, m_mean, covariate,
   # different levels instead of only J levels
   if (nested) {
     setnames(data, "word_long", "word_long_orig")
-    data[, word_long := interaction(subject_long, word_long_orig)]
+    data.table::set(data, j = "word_long",
+                    value = interaction(data$subject_long, data$word_long_orig))
   }
 
   # Rest of function is only necessary to create the interaction variables for
@@ -179,8 +180,8 @@ prepare_gam <- function(data, bs, bf_covariates, m_mean, covariate,
     if (covariate_form[i] == "by") {
 
       # Create the necessary interaction variables
-      form_temp <- as.formula(paste0("~ 0 + dim:covariate.", i))
-      tmp <- model.matrix(form_temp, data = data)
+      form_temp <- stats::as.formula(paste0("~ 0 + dim:covariate.", i))
+      tmp <- stats::model.matrix(form_temp, data = data)
       colnames(tmp) <- sub("\\:covariate", "", colnames(tmp))
       data <- cbind(data, tmp)
 
@@ -207,9 +208,9 @@ prepare_gam <- function(data, bs, bf_covariates, m_mean, covariate,
         if (which_interaction[i, k] & (i < k)) {
 
           # Create the necessary interaction variables
-          form_temp <- as.formula(paste0("~ 0 + dim:covariate.", i,
+          form_temp <- stats::as.formula(paste0("~ 0 + dim:covariate.", i,
                                          ":covariate.", k))
-          tmp <- model.matrix(form_temp, data = data)
+          tmp <- stats::model.matrix(form_temp, data = data)
           colnames(tmp) <- sub("\\:covariate", "\\.inter", colnames(tmp))
           colnames(tmp) <- sub("\\:covariate", "", colnames(tmp))
           data <- cbind(data, tmp)

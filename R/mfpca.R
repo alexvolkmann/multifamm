@@ -276,7 +276,7 @@ extract_var_info <- function(MFPC = MFPC){
       out <- funData::norm(MFPC[[comps]]$functions[[dim]])
       names(out) <- paste0(names(MFPC)[comps],
                            seq_len(nObs(MFPC[[comps]]$functions)))
-      out <- na.omit(out)
+      out <- stats::na.omit(out)
       out
     }))
   })

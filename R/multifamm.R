@@ -82,7 +82,7 @@
 #'     \item unidim: separate on each dimension.
 #'   }
 #' @param final_method Function used for estimation of final model to allow for
-#'   potential heteroscedasticity ("w_bam", "bam", "gamm", "gaulss").
+#'   potential heteroscedasticity ("w_bam", "bam", "gaulss").
 #' @param weight_refit Get the weights for the weighted bam by first refitting
 #'   the model under an independence assumption but with mfpc basis functions.
 #'   Defaults to FALSE.
@@ -122,7 +122,7 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
                       mfpc_weight = FALSE, mfpc_cutoff = 0.95,
                       number_mfpc = NULL,
                       mfpc_cut_method = c("total_var", "unidim"),
-                      final_method = c("w_bam", "bam", "gamm", "gaulss"),
+                      final_method = c("w_bam", "bam", "gaulss"),
                       weight_refit = FALSE, ...){
 
   # Match arguments that are chosen from list of options

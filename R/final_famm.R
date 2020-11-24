@@ -37,7 +37,7 @@ create_formula <- function(data, MFPC, bs, bf_mean, m_mean){
   random_effects <- do.call(paste, list(new_terms, collapse = " + "))
 
   # Components plus terms that are always the same
-  formula <- as.formula(paste0("y_vec ~ 0 + dim + ",
+  formula <- stats::as.formula(paste0("y_vec ~ 0 + dim + ",
                                "s(t, by = dim, k = ", bf_mean, ", bs = \"", bs,
                                "\", m = ",
                                paste0("c(", paste(m_mean, collapse = ","), ")"),
@@ -59,7 +59,7 @@ final_model <- function(formula, data, final_method, model_list, weight_refit){
   #                 prepare_gam()
   # final_method: Function used for estimation of final model to allow for
   #                 potential heterscedasticity ("bam", "w_bam", "gamm",
-  #                 "gaulss")
+  #                 "gaulss") - "gamm" deprecated
   # model_list  : List containing sparseFLMM objects for each dimension
 
 
@@ -83,21 +83,21 @@ final_model <- function(formula, data, final_method, model_list, weight_refit){
            weights <- rep(weights, times = table(data$dim))
            data$norm_weights <- weights/mean(weights)
            m <- mgcv::bam(formula = formula, data = data,
-                          weights = norm_weights, discrete = TRUE)
+                          weights = data$norm_weights, discrete = TRUE)
            m$orig_weights <- weights
            m
          },
 
          # Assumption: Heteroscedasticity depending on dimension
-         # Could be expanded to incorporate a general residual variance structure
-         # representable with nlme
-         "gamm" = mgcv::gamm(formula = formula, data = data,
-                             weights = varIdent(form = ~ 1|dim)),
+         # Could be expanded to incorporate a general residual variance
+         # structure representable with nlme
+         # "gamm" = mgcv::gamm(formula = formula, data = data,
+         #                     weights = nlme::varIdent(form = ~ 1|dim)),
 
          # Assumption: Gaussian location scale model family
          # Could be expanded to incorporate more covariates
          "gaulss" = mgcv::gam(formula = list (formula, ~ 0 + dim), data = data,
-                              family = gaulss())
+                              family = mgcv::gaulss())
   )
 
 }
@@ -123,7 +123,7 @@ refit_for_weights <- function(formula, data, model_list){
   formula_indep <- paste(formula)
   formula_indep[3] <- gsub(", by = dim[.a-z]*[.1-9]*", "", formula_indep[3])
   formula_indep[3] <- sub("0 \\+ dim \\+", "", formula_indep[3])
-  formula_indep <- as.formula(paste(formula_indep[2], formula_indep[1],
+  formula_indep <- stats::as.formula(paste(formula_indep[2], formula_indep[1],
                                     formula_indep[3]))
 
   # fit the model on a subdataset and extract the sigma estimate
