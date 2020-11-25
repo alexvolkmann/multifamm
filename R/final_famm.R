@@ -81,10 +81,11 @@ final_model <- function(formula, data, final_method, model_list, weight_refit){
                                           model_list = model_list)
            }
            weights <- rep(weights, times = table(data$dim))
-           data$norm_weights <- weights/mean(weights)
+           norm_weights <- weights/mean(weights)
            m <- mgcv::bam(formula = formula, data = data,
-                          weights = data$norm_weights, discrete = TRUE)
+                          weights = norm_weights, discrete = TRUE)
            m$orig_weights <- weights
+           m$norm_weights <- norm_weights
            m
          },
 
