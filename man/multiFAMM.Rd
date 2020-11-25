@@ -94,11 +94,12 @@ Defaults to FALSE.}
 sparseFLMM function.}
 }
 \value{
-A list with four elements
+A list with five elements
   \itemize{
     \item the final multivariate FAMM
     \item the sparseFLMM output for each of the dimensions
-    \item the MFPC output
+    \item information on the untruncated MPFCA results
+    \item the truncated MFPC output
     \item the data used to fit the model.}
 }
 \description{

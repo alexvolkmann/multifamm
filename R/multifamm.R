@@ -88,11 +88,12 @@
 #'   Defaults to FALSE.
 #' @param ... Additional arguments to be passed to (mainly) the underlying
 #'   sparseFLMM function.
-#' @return A list with four elements
+#' @return A list with five elements
 #'   \itemize{
 #'     \item the final multivariate FAMM
 #'     \item the sparseFLMM output for each of the dimensions
-#'     \item the MFPC output
+#'     \item information on the untruncated MPFCA results
+#'     \item the truncated MFPC output
 #'     \item the data used to fit the model.}
 #' @export
 #' @import data.table
@@ -198,9 +199,9 @@ multiFAMM <- function(data, fRI_B = FALSE, fRI_C = FALSE, nested = FALSE,
   # List of results as output
   out <- list("model" = m2,
               "model_indep" = model_list,
+              "var_info" = var_info,
               "mfpc" = MFPC,
-              "data" = data,
-              "var_info" = var_info)
+              "data" = data)
   out
 
 }
