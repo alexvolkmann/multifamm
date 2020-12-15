@@ -394,7 +394,7 @@ predict_fitted <- function (model, grid = seq(0, 1, length.out = 100)) {
 #' @param multi Indicator if it is a multiFAMM model (TRUE) or a list of
 #'   univariate models.
 #' @param dimnames Vector of strings containing the names of the dimensions.
-#'
+#' @keywords internal
 #' @return A multiFunData object.
 predict_mean <- function(model, multi = TRUE, dimnames = c("aco", "epg")) {
 
@@ -456,10 +456,36 @@ predict_mean <- function(model, multi = TRUE, dimnames = c("aco", "epg")) {
 #------------------------------------------------------------------------------#
 # Extract Model Components to be Compared from Univariate Model
 #------------------------------------------------------------------------------#
+#' Extract Model Components to be Compared from Univariate Model
+#'
+#' This is an internal function that helps to compare different models. The
+#' models resulting from a multiFAMM() call are typically very big. This
+#' function extracts the main information from a univariate model so that a
+#' smaller R object can be saved.
+#'
+#' So far the grid is fixed to be on [0,1].
+#'
+#' @param model Univariate multiFAMM model object from which to extract the
+#'   information.
+#'
+#' @return A list with the following elements
+#'   \itemize{
+#'     \item \code{error_var}: A list containing the following elements
+#'       \itemize{
+#'       \item \code{model_weights}: Model weights used in the final multiFAMM.
+#'       \item \code{modelsig2}: Estimate of sigma squared in the final model.
+#'       \item \code{uni_vars}: Univariate estimates of sigma squared.}
+#'     \item \code{eigenvals}: List containing the estimated eigenvalues.
+#'     \item \code{fitted_curves}: multiFunData object containing the fitted
+#'       curves.
+#'     \item \code{eigenfcts}: multiFunData object containing the estimated
+#'       eigenfunctions.
+#'     \item \code{cov_preds}: multiFunData object containing the estimated
+#'       covariate effects.
+#'     \item \code{ran_preds}: List containing multiFunData objects of the
+#'       predicted random effects.
+#'     \item \code{scores}: List containing matrices of the estimated scores.}
 extract_components_uni <- function (model) {
-
-  # Arguments
-  # model       : Model from which to extract
 
   grid <- seq(0, 1, length.out = 100)
 

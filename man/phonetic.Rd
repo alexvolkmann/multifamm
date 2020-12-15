@@ -7,23 +7,23 @@
 \format{
 A data.frame with 50644 observations and 12 variables:
 \describe{
-  \item{\code{dim}}{factor for identifying the acoustic (aco) and
+  \item{\code{dim}}{Factor for identifying the acoustic (aco) and
      electropalatographic (epg) dimensions.}
-  \item{\code{subject_long}}{unique identification number for each speaker.}
-  \item{\code{word_long}}{unique identification number for each target word.}
-  \item{\code{combi_long}}{number of the repetition of the combination of the
+  \item{\code{subject_long}}{Unique identification number for each speaker.}
+  \item{\code{word_long}}{Unique identification number for each target word.}
+  \item{\code{combi_long}}{Number of the repetition of the combination of the
      corresponding speaker and target word.}
- \item{\code{y_vec}}{the response values for each observation point.}
- \item{\code{n_long}}{unique identification number for each curve.}
- \item{\code{t}}{the observations point locations.}
- \item{\code{covariate.1}}{order of the consonants, reference category first
+ \item{\code{y_vec}}{The response values for each observation point.}
+ \item{\code{n_long}}{Unique identification number for each curve.}
+ \item{\code{t}}{The observations point locations.}
+ \item{\code{covariate.1}}{Order of the consonants, reference category first
      /s/ then /sh/.}
- \item{\code{covariate.2}}{stress of the final syllable of the first
+ \item{\code{covariate.2}}{Stress of the final syllable of the first
      compound, reference category 'stressed'.}
- \item{\code{covariate.3}}{stress of the initial syllable of the second
+ \item{\code{covariate.3}}{Stress of the initial syllable of the second
      compound, reference category 'stressed'.}
- \item{\code{covariate.4}}{vowel context, reference category ia.}
- \item{\code{word_names_long}}{names of the target words}
+ \item{\code{covariate.4}}{Vowel context, reference category ia.}
+ \item{\code{word_names_long}}{Names of the target words}
 }
 }
 \source{

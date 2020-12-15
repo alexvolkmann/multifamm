@@ -34,3 +34,4 @@ This is an internal function contained in the multiFAMM function. This
 function takes the MFPCA object and decides how many functional principal
 components are to be included in the model.
 }
+\keyword{internal}

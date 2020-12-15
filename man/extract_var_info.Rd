@@ -15,3 +15,4 @@ This is an internal function contained in the multiFAMM function. This step
 allows to extract the information of the total variation in the data (multi-
 and univariate).
 }
+\keyword{internal}

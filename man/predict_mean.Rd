@@ -24,3 +24,4 @@ mean function for all covariates set to 0.5. This is useful if combined with
 the estimated FPCs because one can then add and subtract suitable multiples
 from this function.
 }
+\keyword{internal}

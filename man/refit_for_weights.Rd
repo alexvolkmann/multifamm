@@ -18,3 +18,4 @@ This is an internal function. Refit the model under an independence
 assumption now with the basis functions from the MFPCA. Goal is to extract an
 estimate for the error variances.
 }
+\keyword{internal}

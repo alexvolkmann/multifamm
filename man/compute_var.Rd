@@ -23,3 +23,4 @@ This is an internal function. The function takes all the information needed
 to calculate how many FPCs are needed to reach the pre-specified cutoff
 level.
 }
+\keyword{internal}

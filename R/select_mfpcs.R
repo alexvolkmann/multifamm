@@ -15,7 +15,7 @@
 #' @param mfpca_info Object containing all the neccessary information for the
 #'   MFPCA. List as given by the output of prepare_mfpca().
 #' @inheritParams multiFAMM
-#'
+#' @keywords internal
 prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
                        number_mfpc, mfpca_info){
 
@@ -132,7 +132,7 @@ prune_mfpc <- function(MFPC, mfpc_cutoff, model_list, mfpc_cut_method,
 #'   the Eigenvalues.
 #' @param mfpc_cutoff Pre-specified level of explained variance of results of
 #'   MFPCA.
-#'
+#' @keywords internal
 compute_var <- function(sigma_sq, values, norms_sq, mfpc_cutoff){
 
   # Compute the full variance using the total variation from MFPCA

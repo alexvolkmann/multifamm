@@ -119,6 +119,7 @@ final_model <- function(formula, data, final_method, model_list, weight_refit){
 #' @param formula Formula to fit the final model.
 #' @param data Data that contains all the variables specified in formula.
 #' @param model_list List containing sparseFLMM objects for each dimension
+#' @keywords internal
 refit_for_weights <- function(formula, data, model_list){
 
   # remove the by argument from the smooth terms

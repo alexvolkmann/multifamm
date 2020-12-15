@@ -21,3 +21,4 @@ This is an internal function contained in the multiFAMM function. This step
 uses the information from the univariate FLMMs for the MFPCA. It also allows
 a simple weighting scheme of the MFPCA.
 }
+\keyword{internal}

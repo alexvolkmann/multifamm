@@ -18,23 +18,23 @@
 #'
 #' @format A data.frame with 50644 observations and 12 variables:
 #' \describe{
-#'   \item{\code{dim}}{factor for identifying the acoustic (aco) and
+#'   \item{\code{dim}}{Factor for identifying the acoustic (aco) and
 #'      electropalatographic (epg) dimensions.}
-#'   \item{\code{subject_long}}{unique identification number for each speaker.}
-#'   \item{\code{word_long}}{unique identification number for each target word.}
-#'   \item{\code{combi_long}}{number of the repetition of the combination of the
+#'   \item{\code{subject_long}}{Unique identification number for each speaker.}
+#'   \item{\code{word_long}}{Unique identification number for each target word.}
+#'   \item{\code{combi_long}}{Number of the repetition of the combination of the
 #'      corresponding speaker and target word.}
-#'  \item{\code{y_vec}}{the response values for each observation point.}
-#'  \item{\code{n_long}}{unique identification number for each curve.}
-#'  \item{\code{t}}{the observations point locations.}
-#'  \item{\code{covariate.1}}{order of the consonants, reference category first
+#'  \item{\code{y_vec}}{The response values for each observation point.}
+#'  \item{\code{n_long}}{Unique identification number for each curve.}
+#'  \item{\code{t}}{The observations point locations.}
+#'  \item{\code{covariate.1}}{Order of the consonants, reference category first
 #'      /s/ then /sh/.}
-#'  \item{\code{covariate.2}}{stress of the final syllable of the first
+#'  \item{\code{covariate.2}}{Stress of the final syllable of the first
 #'      compound, reference category 'stressed'.}
-#'  \item{\code{covariate.3}}{stress of the initial syllable of the second
+#'  \item{\code{covariate.3}}{Stress of the initial syllable of the second
 #'      compound, reference category 'stressed'.}
-#'  \item{\code{covariate.4}}{vowel context, reference category ia.}
-#'  \item{\code{word_names_long}}{names of the target words}
+#'  \item{\code{covariate.4}}{Vowel context, reference category ia.}
+#'  \item{\code{word_names_long}}{Names of the target words}
 #' }
 #'
 #' @source Pouplier, Marianne and Hoole, Philip (2016): Articulatory and
@@ -69,4 +69,46 @@
 #'   Irregularly or Sparsely Sampled Data. R package version 0.3.0.
 #'    \url{https://CRAN.R-project.org/package=sparseFLMM}
 "phonetic_subset"
+
+
+#' Snooker data
+#'
+#' The data are part of a study on the impact of a muscular training program on
+#' snooker technique. 25 recreational snooker players were split into treatment
+#' (receiving instructions for a training program) and control group (no
+#' training program). The data set contains the movement trajectories of the
+#' snooker players in two sessions (before and after the training period), where
+#' each snooker player repeated a snooker shot of maximal force six times. The
+#' interest lies in the movement of hand, elbow, and shoulder on a
+#' two-dimensional grid (called X and Y). The trajectories are normalized on a
+#' [0,1] time grid and the beginning of the hand trajectories are centered to
+#' the origin.
+#'
+#' @format A data.frame with 56910 observations and 11 variables:
+#' \describe{
+#'  \item{\code{y_vec}}{The response values for each observation point.}
+#'  \item{\code{t}}{The observations point locations.}
+#'  \item{\code{n_long}}{Unique identification number for each curve.}
+#'   \item{\code{subject_long}}{Unique identification number for each snooker
+#'      player.}
+#'   \item{\code{word_long}}{Integer specifying the session. 1: Before the
+#'      training, 2: After the training.}
+#'   \item{\code{dim}}{Factor for identifying the univariate dimensions.}
+#'   \item{\code{combi_long}}{Number of the repetition of the snooker shot.}
+#'  \item{\code{covariate.1}}{Skill level of the snooker player. 0: Unskilled,
+#'      1: Skilled.}
+#'  \item{\code{covariate.2}}{Group of the snooker player. 0: Control group,
+#'      1: Treatment group.}
+#'  \item{\code{covariate.3}}{Session indicator. 0: Before the treatment, 1:
+#'      After the treatment.}
+#'  \item{\code{covariate.4}}{Interaction of group and session, i.e. the
+#'      treatment effect indicator.}
+#' }
+#'
+#' @source Enghofer, T. (2014). Überblick über die Sportart Snooker, Entwicklung
+#'    eines Muskeltrainings und Untersuchung dessen Einflusses auf die
+#'    Stoßtechnik. Unpublished Zulassungsarbeit, Technische Universität
+#'    München.
+#'
+"snooker"
 

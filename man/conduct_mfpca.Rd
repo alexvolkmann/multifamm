@@ -22,3 +22,4 @@ a single weighting scheme of the MFPCA.
 Currently, it is possible to conduct a non-weighted MFPCA (default) as well
 as a MFPCA that uses the estimated univariate error variances as weights.
 }
+\keyword{internal}
