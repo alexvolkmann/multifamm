@@ -35,6 +35,13 @@
 #'     1,2,3,...
 #' }
 #'
+#' It is possible to introduce weights for the final estimation of the
+#' multiFAMM. Currently, it is only implemented to use the inverse of the
+#' univariate measurement error estimates as weights. Note that negative
+#' values of variance estimates are set to zero in fast symmetric additive
+#' covariance smoothing. In order to still include weights, zero-values are
+#' substituted by values of the smallest positive variance estimate.
+#'
 #' @param data Data.table that contains the information with some fixed variable
 #'   names, see Details.
 #' @param fRI_B Boolean for including functional random intercept for individual

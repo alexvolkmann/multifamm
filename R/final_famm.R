@@ -73,8 +73,19 @@ final_model <- function(formula, data, final_method, model_list, weight_refit){
            if (!weight_refit) {
              weights <- sapply(model_list, function(x) {
                sig <- grep("^cov_hat_", names(x))
-               1 / x[[sig]]$sigmasq
+               x[[sig]]$sigmasq
              })
+             if (any(weights == 0)) {
+               warning("The univariate variance on dimension ",
+                       names(weights[weights == 0]),
+                       " is estimated to be exactly 0 (truncation for neg. val",
+                       "ues).\nThe respective estimate is substituted by the s",
+                       "mallest pos. value (dimension ",
+                       names(which.min(weights[!weights == 0])),
+                       ") to get valid regression weights.")
+               weights[weights == 0] <- min(weights[!weights == 0])
+             }
+             weights <- 1 / weights
            } else {
              # refit the model to get an update of the sigma^2 estimate
              weights <- refit_for_weights(formula = formula, data = data,

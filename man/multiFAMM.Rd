@@ -126,6 +126,13 @@ The data set has to be of the following format:
   \item covariate.1 (numeric): potential covariate(s) named with trailing
     1,2,3,...
 }
+
+It is possible to introduce weights for the final estimation of the
+multiFAMM. Currently, it is only implemented to use the inverse of the
+univariate measurement error estimates as weights. Note that negative
+values of variance estimates are set to zero in fast symmetric additive
+covariance smoothing. In order to still include weights, zero-values are
+substituted by values of the smallest positive variance estimate.
 }
 \examples{
 \dontrun{
