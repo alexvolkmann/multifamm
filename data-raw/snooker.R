@@ -8,8 +8,8 @@ load("../snooker.RData")
 
 # transform it to long format
 snooker_flmm <- snooker %>%
-  rbind(mutate(., y = x, y_raw = x_raw, y_new = x_new)) %>%
-  mutate(x = NULL, x_raw = NULL, x_new = NULL,
+  rbind(mutate(., y_raw = x_raw, y_new = x_new)) %>%
+  mutate(x_raw = NULL, x_new = NULL,
          dim = rep(c("y", "x"), each = nrow(snooker)))
 
 # downsize the data and filter it
